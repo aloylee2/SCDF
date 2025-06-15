@@ -7,28 +7,26 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SecondScreen from './src/screens/SecondScreen';
 
 const Stack = createNativeStackNavigator();
-
 function HomeScreen({ navigation }: any) {
-  const [data, setData] = useState(null);
-  
-useEffect(() => {
+  const [data, setData] = useState<string | null>(null);
+
+  useEffect(() => {
     fetch('http://10.0.2.2:5000/api')
       .then(async response => {
+        console.log('Status:', response.status);
         const text = await response.text();
+        console.log('Response body:', text);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return JSON.parse(text);
-      })
-      .then(data => {
-        setData(data);
+        setData(text);
       })
       .catch(error => {
         console.error('Fetch error:', error);
+        setData('Error fetching backend');
       });
   }, []);
-
-
+  
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Hello World!</Text>

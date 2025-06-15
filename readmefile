@@ -1,21 +1,15 @@
 Before you start coding 
 
-step 1: cd mobile (always in mobile)
+(follow the steps below to run the project)
+step 1:
+docker-compose -f backend/docker-compose.yml build --no-cache
+docker-compose -f backend/docker-compose.yml up
 
-step 2: npm run docker
+step 2: cd mobile (always in mobile)
 
-========================================================================
-(split terminal to run the code below)
+step 3: npx react-native run-android
 
-step 3: cd mobile (always in mobile)
-
-step 4: npx react-native run-android
-
-
+docker down:
 docker-compose -f backend/docker-compose.yml down -v
 
 
-
-docker-compose -f backend/docker-compose.yml build --no-cache
-docker-compose -f backend/docker-compose.yml up
->>>>>>> Stashed changes
