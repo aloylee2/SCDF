@@ -1,3 +1,12 @@
 {
+  "include": [
+    "src/types",
+    "src/components/**/*",
+    "src/constants/**/*",
+    "src/hooks/**/*",
+    "src/navigation/**/*",
+    "src/screens/**/*",
+    "src/services/**/*"
+  ],
   "extends": "@react-native/typescript-config"
 }

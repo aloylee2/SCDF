@@ -10,7 +10,7 @@
 │   ├── navigation/             // Navigation stack configurations
 │   │   ├── AppNavigator.tsx
 │   ├── screens/                // Individual screens/pages
-│   │   ├── HomeScreen.tsx      // This will be the myRESPONDER dashboard
+│   │   ├── DashboardScreen.tsx      // This will be the myRESPONDER dashboard
 │   │   ├── LearnScreen.tsx
 │   │   ├── Call995Screen.tsx
 │   │   ├── FireHazardScreen.tsx
