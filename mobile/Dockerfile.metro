@@ -1,0 +1,21 @@
+FROM node:18
+
+# Install watchman (optional but recommended for React Native)
+RUN apt-get update && apt-get install -y watchman
+
+WORKDIR /app
+
+# Copy package.json and yarn.lock/npm package-lock.json
+COPY package.json yarn.lock* package-lock.json* ./
+
+# Install dependencies
+RUN yarn install --frozen-lockfile || npm install
+
+# Copy the rest of the React Native app code
+COPY . .
+
+# Expose Metro bundler port
+EXPOSE 8081
+
+# Start Metro bundler
+CMD ["npx", "react-native", "start", "--reset-cache"]
