@@ -3,11 +3,13 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, SafeAreaView, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import DashboardCard from '../components/DashboardCard';
 import ActionCard from '../components/ActionCard';
+import PostEmergencyOverlay from '../components/PostEmergencyOverlay';
+import { fetchData } from '../services/api'; // Assuming you have a service to fetch data
+import PostEmergencyDetailScreen from './PostEmergencyDetailScreen'; // NEW IMPORT
 
-// Import all necessary icons from the correct path.
-// ***********************************************************************************
-// ***** AS PER YOUR INSTRUCTION, THESE IMPORTS ARE NOT MODIFIED IN THIS RESPONSE ****
-// ***********************************************************************************
+
+
+// Importing assets for the dashboard
 import BellIcon from '../assets/logos_post_emergency/bell_icon_logo.png';
 import CasesTodayLog from '../assets/logos_post_emergency/cases_today_log.png';
 import ExtinguisherLog from '../assets/logos_post_emergency/extinguishier_logo.png';
@@ -28,6 +30,36 @@ export default function DashboardScreen({ navigation }: any) {
     casesResponded: 7,
   });
 
+  // State to manage the visibility of the post-emergency overlay
+  const [showPostEmergencyOverlay, setShowPostEmergencyOverlay] = useState(false);
+
+  // Function to simulate showing the overlay (e.g., after an emergency response)
+  const triggerPostEmergencyOverlay = () => {
+    setShowPostEmergencyOverlay(true);
+  };
+
+  // Function to close the overlay
+  const closePostEmergencyOverlay = () => {
+    setShowPostEmergencyOverlay(false);
+  };
+
+  // Modified to receive caseDetails and navigate
+  const handleExpandOverlayContent = (details: { date: string; responders: string; description: string }) => {
+    setShowPostEmergencyOverlay(false); // Close the current overlay
+    navigation.navigate('PostEmergencyDetail', { caseDetails: details }); // Navigate to the new detail screen
+    console.log('Expand button clicked! Navigating to PostEmergencyDetailScreen with details:', details);
+  };
+
+  useEffect(() => {
+    console.log('showPostEmergencyOverlay state changed to:', showPostEmergencyOverlay);
+  }, [showPostEmergencyOverlay]);
+
+  // Define the caseDetails object here to pass to the overlay and detail screen
+  const currentCaseDetails = {
+    date: 'On 16/06/2025',
+    responders: 'Rohit | Alphys | Kaiao | Sean',
+    description: 'Responded to a case of cardiac arrest at Block 227 Jurong East Street 32, successfully reviving the patient.',
+  };
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* StatusBar configuration for Android to make status bar background match header color */}
@@ -123,7 +155,21 @@ export default function DashboardScreen({ navigation }: any) {
           <Text style={styles.newsPlaceholderText}>News items will appear here...</Text>
         </View>
 
+
+        {/* TEMPORARY BUTTON TO TRIGGER OVERLAY */}
+        <TouchableOpacity style={styles.tempOverlayButton} onPress={triggerPostEmergencyOverlay}>
+            <Text style={styles.tempOverlayButtonText}>Show Post-Emergency Overlay</Text>
+        </TouchableOpacity>
+
       </ScrollView>
+
+      {/* PostEmergencyOverlay (Frame 7) */}
+      <PostEmergencyOverlay
+        isVisible={showPostEmergencyOverlay}
+        onClose={closePostEmergencyOverlay}
+        onExpand={handleExpandOverlayContent} // Pass the modified handler
+        caseDetails={currentCaseDetails} // Pass the actual case details
+      />
     </SafeAreaView>
   );
 }
@@ -131,25 +177,15 @@ export default function DashboardScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0F265F', // Ensures the background color of the safe area is dark blue
-  },
-  scrollViewContent: {
-    paddingBottom: 20,
-    backgroundColor: '#F5F5F5', // Light grey background for the scrollable content
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    // The marginTop creates the space for the absolute header and greeting.
-    // It should start where the blue background's rounded corners begin in the prototype.
-    marginTop: 180, // This value determines where the white scrollable content starts
+    backgroundColor: '#0A2542', // Primary dark blue background for consistency with header
   },
   topBackgroundFiller: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    // Height to cover the full blue background section, including the status bar area on Android.
     height: 190 + (Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0), // Adjust height to cover header and greeting
-    backgroundColor: '#0F265F', // Dark blue background
+    backgroundColor: '#0A2542', // Dark blue background
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     zIndex: 0, // This should be behind the header and greeting text
@@ -159,15 +195,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 15,
-    // Dynamically adjust paddingTop to push header content below the status bar.
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 10 : 10,
-    // Header should be absolute or fixed to stay on top, or within the ScrollView but positioned.
-    // For this layout, let's keep it relative to the SafeAreaView.
+    // Adjust paddingTop for more space from the top
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 30 : 40,
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 2, // Ensure header is on top of everything else in its area
+    zIndex: 2, // Ensure header is on top
   },
   headerLeft: {
     flexDirection: 'row',
@@ -182,10 +216,10 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF', // Text color should be white for contrast on dark blue background
+    color: '#FFFFFF',
   },
   heartIconText: {
-    color: '#E57373',
+    color: '#FF6B6B', // Red heart
     fontSize: 22,
   },
   headerRight: {
@@ -209,7 +243,7 @@ const styles = StyleSheet.create({
   alertIcon: {
     width: 18,
     height: 18,
-    tintColor: '#28A745',
+    tintColor: '#28A745', // Green tint for the alert icon
     resizeMode: 'contain',
   },
   bellButton: {
@@ -224,23 +258,27 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 18,
     fontWeight: '500',
-    color: '#FFFFFF', // Ensure this text is white to be visible on the blue background
-    position: 'absolute', // Kept absolute to overlay the blue filler
-    // Position the greeting below the header.
-    // Calculate based on header's paddingTop + header's intrinsic height.
-    top: (Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 10 : 10) + 30 + 20, // Approx header content top + logo/text height + spacing
+    color: '#FFFFFF',
+    position: 'absolute',
+    // Adjust top based on header's height and padding
+    top: (Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 20) + 30 + 15, // Adjusted based on new header padding
     left: 15,
     right: 15,
     zIndex: 2, // Ensure greeting text is above the filler
+  },
+  scrollViewContent: {
+    paddingBottom: 150, // Increased to make the test button visible
+    backgroundColor: '#F5F5F5', // Light grey background for the scrollable content
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: 180, // This value aligns with the topBackgroundFiller height
+    paddingTop: 20, // Padding inside the scroll view after the curve
   },
   dashboardCardsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     paddingHorizontal: 15,
-    // This marginTop will now be relative to the scrollViewContent's top.
-    // It needs to be adjusted based on the design, perhaps removing it if scrollViewContent's marginTop handles it.
-    marginTop: 20, // Adjust this to control spacing from the top of the grey area
     marginBottom: 20,
   },
   sectionHeader: {
@@ -263,7 +301,7 @@ const styles = StyleSheet.create({
   horizontalScroll: {
     paddingLeft: 15,
     marginBottom: 20,
-    paddingBottom: 10,
+    paddingBottom: 10, // Add padding at bottom to prevent clipping on some action cards
   },
   newsPlaceholder: {
     borderWidth: 1,
@@ -279,5 +317,20 @@ const styles = StyleSheet.create({
   },
   newsPlaceholderText: {
     color: '#666',
-  }
+  },
+  tempOverlayButton: {
+    backgroundColor: '#FF6B6B', // A prominent color for the test button
+    padding: 15,
+    borderRadius: 8,
+    marginHorizontal: 15,
+    marginTop: 20,
+    marginBottom: 40, // Space it out from bottom nav or end of content
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tempOverlayButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
