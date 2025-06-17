@@ -45,6 +45,12 @@ step 5: docker-compose down -v
 step 6: psql -h localhost -p 5432 -U scdf_username -d scdf_db
 		password:scdf_password
 
+PostgreSQL: 
+  - Host: localhost
+  - Port: 5432
+  - Username: scdf_username
+  - Password: scdf_password
+  - Database: scdf_db
 
 
 
