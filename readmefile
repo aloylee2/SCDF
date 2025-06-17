@@ -13,3 +13,38 @@ docker down:
 docker-compose -f backend/docker-compose.yml down -v
 
 
+====================================================================================
+(backend postgresql)
+step 1: psql -h localhost -p 5433 -U scdf_username -d scdf_db
+	password:scdf_password
+
+-------------if have error--------
+
+step 2: netstat -ano | findstr :5432
+
+-------------if have error--------
+
+step 3: tasklist /FI "PID eq 7824"
+	tasklist /FI "PID eq 21212"
+
+
+step 4: Stop or disable the service/program occupying port 5432
+
+	If either is a native PostgreSQL service, stop it to free the port:
+
+	Open Services (press Win+R, type services.msc)
+
+	Find PostgreSQL service(s)
+
+	Stop and disable it temporarily
+
+
+step 5: docker-compose down -v
+	docker-compose up --build
+
+step 6: psql -h localhost -p 5433 -U scdf_username -d scdf_db
+	password:scdf_password
+
+
+
+
