@@ -45,6 +45,7 @@ step 5: docker-compose down -v
 step 6: psql -h localhost -p 5432 -U scdf_username -d scdf_db
 		password:scdf_password
 
+=====================================================================================
 Set up GUI for PostgreSQL:
 # pgAdmin 4
 1. Download and install pgAdmin 4 from the official website.
