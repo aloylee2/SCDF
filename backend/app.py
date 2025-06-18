@@ -1,8 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask import Flask, jsonify
 import os
-import requests
 
 app = Flask(__name__)
 
