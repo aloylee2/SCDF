@@ -12,7 +12,7 @@ import PostEmergencyDetailScreen from './PostEmergencyDetailScreen'; // NEW IMPO
 // Importing assets for the dashboard
 import BellIcon from '../assets/logos_post_emergency/bell_icon_logo.png';
 import CasesTodayLog from '../assets/logos_post_emergency/cases_today_log.png';
-import ExtinguisherLog from '../assets/logos_post_emergency/extinguishier_logo.png';
+import ExtinguisherLog from '../assets/logos_post_emergency/extinguisher_logo.png';
 import FireIcon from '../assets/logos_post_emergency/fire_logo.jpg';
 import GettingStartingLogo from '../assets/logos_post_emergency/getting_starting_logo.png';
 import HeartIconLogo from '../assets/logos_post_emergency/heart_icon_logo.png';
