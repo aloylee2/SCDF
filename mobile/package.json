@@ -17,6 +17,7 @@
     "@react-navigation/native-stack": "^7.3.15",
     "react": "19.1.0",
     "react-native": "0.80.0",
+    "react-native-maps": "^1.24.3",
     "react-native-safe-area-context": "^5.4.1",
     "react-native-screens": "^4.11.1"
   },

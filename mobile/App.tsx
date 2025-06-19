@@ -9,6 +9,7 @@ import SecondScreen from './src/screens/SecondScreen';
 // Import DashboardScreen from its new file
 import DashboardScreen from './src/screens/DashboardScreen';
 import PostEmergencyDetailScreen from './src/screens/PostEmergencyDetailScreen';
+import ViewMoreScreen from './src/screens/ViewMoreScreen';
 
 const Stack = createNativeStackNavigator();
 function HomeScreen({ navigation }: any) {
@@ -39,6 +40,7 @@ function HomeScreen({ navigation }: any) {
       </Text>
       <Button title="Go to Second Page" onPress={() => navigation.navigate('Second')} />
       <Button title="Go to Dashboard" onPress={() => navigation.navigate('Dashboard')} />
+      <Button title="Go to View More" onPress={() => navigation.navigate('ViewMore')} />
     </View>
   );
 }
@@ -51,7 +53,7 @@ export default function App() {
         <Stack.Screen name="Second" component={SecondScreen} />
         <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ headerShown: false }} />
         <Stack.Screen name="PostEmergencyDetail" component={PostEmergencyDetailScreen} />
-
+        <Stack.Screen name="ViewMore" component={ViewMoreScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

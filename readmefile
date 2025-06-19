@@ -13,6 +13,10 @@ docker down:
 docker-compose -f backend/docker-compose.yml down -v
 
 
+(to start flask) // if flask didnt start
+step 4: cd backend 
+		python app.py
+
 ====================================================================================
 (backend postgresql)
 
