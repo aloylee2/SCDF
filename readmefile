@@ -12,6 +12,18 @@ step 3: npx react-native run-android
 docker down:
 docker-compose -f backend/docker-compose.yml down -v
 
+====================================================================================
+
+error to fix:
+
+if there is this error
+
+"devDependencies": {
+    "@react-native-community/cli": "latest",
+  }
+
+
+command: npm install --save-dev @react-native-community/cli@latest
 
 (to start flask) // if flask didnt start
 step 4: cd backend 
@@ -50,6 +62,7 @@ step 6: psql -h localhost -p 5432 -U scdf_username -d scdf_db
 		password:scdf_password
 
 =====================================================================================
+
 Set up GUI for PostgreSQL:
 # pgAdmin 4
 1. Download and install pgAdmin 4 from the official website.
@@ -62,5 +75,5 @@ Set up GUI for PostgreSQL:
   - Password: scdf_password
   - Database: scdf_db
 
-
+=====================================================================================
 
