@@ -10,6 +10,18 @@ import SecondScreen from './src/screens/SecondScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import PostEmergencyDetailScreen from './src/screens/PostEmergencyDetailScreen';
 import ViewMoreScreen from './src/screens/ViewMoreScreen';
+import LearnYourRolesScreen from './src/screens/LearnYourRolesScreen'
+import CPRHeroTrainingScreen from './src/screens/CPRHeroTrainingScreen'; // Your CPR Hero training screen
+import AEDBuddyTrainingScreen from './src/screens/AEDBuddyTrainingScreen'; // New training screen
+import AssistantTrainingScreen from './src/screens/AssistantTrainingScreen'; // New training screen
+import CrowdControllerTrainingScreen from './src/screens/CrowdControllerTrainingScreen'; // New training screen
+import VehicleReceiverTrainingScreen from './src/screens/VehicleReceiverTrainingScreen'; // New training screen
+
+
+
+
+
+
 
 const Stack = createNativeStackNavigator();
 function HomeScreen({ navigation }: any) {
@@ -41,6 +53,7 @@ function HomeScreen({ navigation }: any) {
       <Button title="Go to Second Page" onPress={() => navigation.navigate('Second')} />
       <Button title="Go to Dashboard" onPress={() => navigation.navigate('Dashboard')} />
       <Button title="Go to View More" onPress={() => navigation.navigate('ViewMore')} />
+      <Button title="Learn Your Roles" onPress={() => navigation.navigate('LearnYourRoles')} />
     </View>
   );
 }
@@ -54,6 +67,12 @@ export default function App() {
         <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ headerShown: false }} />
         <Stack.Screen name="PostEmergencyDetail" component={PostEmergencyDetailScreen} />
         <Stack.Screen name="ViewMore" component={ViewMoreScreen} />
+        <Stack.Screen name="LearnYourRoles" component={LearnYourRolesScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="CPRHeroTraining" component={CPRHeroTrainingScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="AEDBuddyTraining" component={AEDBuddyTrainingScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="AssistantTraining" component={AssistantTrainingScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="CrowdControllerTraining" component={CrowdControllerTrainingScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="VehicleReceiverTraining" component={VehicleReceiverTrainingScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

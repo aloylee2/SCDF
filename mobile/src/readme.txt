@@ -18,10 +18,3 @@
 │   │   └── SecondScreen.tsx    // Keep for now, or remove if not needed in final app
 │   ├── services/               // API calls, data fetching (already have api.ts)
 │   │   ├── api.ts
-│   ├── styles/                 // Global styles, theme
-│   │   ├── colors.ts
-│   │   ├── typography.ts
-│   │   └── globalStyles.ts
-│   └── utils/                  // Utility functions
-│       ├── constants.ts
-│       └── helpers.ts
