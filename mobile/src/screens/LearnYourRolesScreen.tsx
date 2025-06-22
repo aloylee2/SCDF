@@ -9,8 +9,8 @@ const { width, height } = Dimensions.get('window');
 
 const LearnYourRolesScreen: React.FC<any> = ({ navigation }) => {
   const roles = [
-    'AED Buddy',
     'CPR Hero',
+    'AED Buddy',
     'Assistant',
     'Crowd controller',
     'Vehicle Receiver',
@@ -18,11 +18,11 @@ const LearnYourRolesScreen: React.FC<any> = ({ navigation }) => {
 
   const handleRoleSelection = (role: string) => {
     switch (role) {
+        case 'CPR Hero':
+        navigation.navigate('CPRHeroTraining');
+        break;
       case 'AED Buddy':
         navigation.navigate('AEDBuddyTraining');
-        break;
-      case 'CPR Hero':
-        navigation.navigate('CPRHeroTraining');
         break;
       case 'Assistant':
         navigation.navigate('AssistantTraining');
@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
     tintColor: 'black',
   },
   title: {
+    paddingTop: 60,
     fontSize: 28,
     fontWeight: '900',
     color: '#0A2542',

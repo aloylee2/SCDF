@@ -5,8 +5,7 @@ import DashboardCard from '../components/DashboardCard';
 import ActionCard from '../components/ActionCard';
 import PostEmergencyOverlay from '../components/PostEmergencyOverlay';
 import { fetchData } from '../services/api'; // Assuming you have a service to fetch data
-import PostEmergencyDetailScreen from './PostEmergencyDetailScreen'; // NEW IMPORT
-
+import PostEmergencyDetailScreen from './PostEmergencyDetailScreen';
 
 
 // Importing assets for the dashboard
@@ -130,6 +129,12 @@ export default function DashboardScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+          <ActionCard
+            title="Learn about the roles of a CFR"
+            description="Learn more about the role allocted to you as a Community First Responder."
+            iconSource={GettingStartingLogo}
+            onPress={() => navigation.navigate('LearnYourRoles', { module: 'GettingStarted' })}
+          />
           <ActionCard
             title="Getting started as a CFR"
             description="Learn more about the role of a Community First Responder."

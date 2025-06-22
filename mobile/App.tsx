@@ -16,8 +16,8 @@ import AEDBuddyTrainingScreen from './src/screens/AEDBuddyTrainingScreen'; // Ne
 import AssistantTrainingScreen from './src/screens/AssistantTrainingScreen'; // New training screen
 import CrowdControllerTrainingScreen from './src/screens/CrowdControllerTrainingScreen'; // New training screen
 import VehicleReceiverTrainingScreen from './src/screens/VehicleReceiverTrainingScreen'; // New training screen
-
-
+import PostEmergencyOverlay from './src/components/PostEmergencyOverlay';
+import DisabilityScreen from './src/screens/DisabilitySettingsScreen';
 
 
 
@@ -53,7 +53,7 @@ function HomeScreen({ navigation }: any) {
       <Button title="Go to Second Page" onPress={() => navigation.navigate('Second')} />
       <Button title="Go to Dashboard" onPress={() => navigation.navigate('Dashboard')} />
       <Button title="Go to View More" onPress={() => navigation.navigate('ViewMore')} />
-      <Button title="Learn Your Roles" onPress={() => navigation.navigate('LearnYourRoles')} />
+      <Button title="Go to Disability Settings" onPress={() => navigation.navigate('DisabilitySettings')} />
     </View>
   );
 }
@@ -73,6 +73,7 @@ export default function App() {
         <Stack.Screen name="AssistantTraining" component={AssistantTrainingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="CrowdControllerTraining" component={CrowdControllerTrainingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="VehicleReceiverTraining" component={VehicleReceiverTrainingScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="DisabilitySettings" component={DisabilityScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,26 +1,40 @@
 // src/screens/CPRHeroTrainingScreen.tsx
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Dimensions, Image, Platform, StatusBar } from 'react-native';
 
-const CPRManTrainingScreen: React.FC<any> = ({ navigation }) => {
+import YellowCircle from '../assets/cpr_man_role_training/yellow_circle.jpg';
+import YellowSLineVector from '../assets/cpr_man_role_training/yellow_s_line_vector.jpg';
+import CPRHeroLogo from '../assets/cpr_man_role_training/cpr_hero_logo.jpg'; // Import the CPR Hero specific logo
+
+const { width, height } = Dimensions.get('window');
+
+const CPRHeroTrainingScreen: React.FC<any> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>CPR Hero</Text>
+      {/* Background Images */}
+      <View style={styles.backgroundContainer}>
+        <Image source={YellowCircle} style={styles.yellowCircle} />
+        <Image source={YellowSLineVector} style={styles.yellowSLineVector} />
       </View>
+
+      {/* Main Content */}
       <View style={styles.container}>
-        <Text style={styles.title}>Welcome, CPR Hero!</Text>
-        <Text style={styles.description}>
-          This section will contain detailed information and resources for CPR training,
-          including videos, guides, and interactive lessons.
-        </Text>
-        {/* You can add more content here later, like:
-        <Text style={styles.sectionTitle}>Key Steps in CPR:</Text>
-        <Text>- Step 1: Check for Responsiveness</Text>
-        <Text>- Step 2: Call 995</Text>
-        <Text>- Step 3: Chest Compressions</Text>
-        */}
-        <Text style={styles.comingSoon}>More content coming soon!</Text>
+        <Text style={styles.title}>CPR Hero</Text>
+        <View style={styles.descriptionList}>
+          <Text style={styles.descriptionBullet}>
+            • You are focused on attending to the casualty straight.
+          </Text>
+          <Text style={styles.descriptionBullet}>
+            • Check for pulse and breathing.
+          </Text>
+          <Text style={styles.descriptionBullet}>
+            • Commence CPR when necessary.
+          </Text>
+          <Text style={styles.descriptionBullet}>
+            • You may still retrieve AEDs along the way if convenient.
+          </Text>
+        </View>
+        <Image source={CPRHeroLogo} style={styles.cprLogo} resizeMode="contain" />
       </View>
     </SafeAreaView>
   );
@@ -29,53 +43,68 @@ const CPRManTrainingScreen: React.FC<any> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: 'transparent',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#0A2542', // Dark blue header background
+  backgroundContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: 'hidden',
   },
-  backButton: {
-    paddingRight: 10,
+  yellowCircle: {
+    position: 'absolute',
+    width: width * 1.2,
+    height: width * 1.2,
+    bottom: -height * 0.3,
+    right: -width * 0.4,
+    resizeMode: 'contain',
+    opacity: 0.3,
+    transform: [{ rotate: '15deg' }],
   },
-  backButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-  },
-  headerTitle: {
-    paddingTop: 20,
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
+  yellowSLineVector: {
+    position: 'absolute',
+    width: width * 1.0,
+    height: height * 0.6,
+    top: height * 0.1,
+    left: -width * 0.1,
+    resizeMode: 'contain',
+    opacity: 0.3,
+    transform: [{ rotate: '-10deg' }],
   },
   container: {
     flex: 1,
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 30,
+    paddingTop: Platform.OS === 'android' ? ((StatusBar.currentHeight || 0) + 50) : 80,
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    backgroundColor: 'transparent',
   },
   title: {
-    fontSize: 26,
+    fontSize: 30,
     fontWeight: 'bold',
     marginBottom: 15,
     color: '#333',
-    textAlign: 'center',
+    textAlign: 'left',
   },
-  description: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 24,
+  descriptionList: {
+    width: '100%', // Ensure the list takes full width for consistent alignment
+    marginBottom: 60, // Space before the logo
   },
-  comingSoon: {
+  descriptionBullet: {
     fontSize: 18,
-    fontStyle: 'italic',
-    color: '#999',
-    marginTop: 30,
+    color: '#666',
+    textAlign: 'left',
+    lineHeight: 28,
+    marginBottom: 5, // Small margin between bullet points
+  },
+  cprLogo: {
+    paddingTop: 700,
+    width: 150,
+    height: 150,
+    alignSelf: 'center', // Center the logo horizontally
   },
 });
 
-export default CPRManTrainingScreen;
+export default CPRHeroTrainingScreen;

@@ -1,20 +1,44 @@
-// src/screens/AEDBuddyTrainingScreen.tsx
+// src/screens/AEDBuddhyTrainingScreen.tsx
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Dimensions, Image, Platform, StatusBar } from 'react-native';
+
+// Reusing background images from CPRHeroTrainingScreen
+import YellowCircle from '../assets/cpr_man_role_training/yellow_circle.jpg';
+import YellowSLineVector from '../assets/cpr_man_role_training/yellow_s_line_vector.jpg';
+
+// Assuming you have these AED specific images in your assets
+import AEDDevice from '../assets/aed_buddy_role_training/aed_buddy_aed_logo.jpg';
+import AEDMapSnippet from '../assets/aed_buddy_role_training/aed_buddy_map.jpg';
+
+const { width, height } = Dimensions.get('window');
 
 const AEDBuddyTrainingScreen: React.FC<any> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
- 
-        <Text style={styles.headerTitle}>AED Buddy</Text>
+      {/* Background Images */}
+      <View style={styles.backgroundContainer}>
+        <Image source={YellowCircle} style={styles.yellowCircle} />
+        <Image source={YellowSLineVector} style={styles.yellowSLineVector} />
       </View>
+
+      {/* Main Content */}
       <View style={styles.container}>
         <Text style={styles.title}>AED Buddy</Text>
-        <Text style={styles.description}>
-          This section will contain detailed information and resources for AED usage, including placement, operation, and safety guidelines.
-        </Text>
-        <Text style={styles.comingSoon}>More content coming soon!</Text>
+        <View style={styles.descriptionList}>
+          <Text style={styles.descriptionBullet}>
+            • You are tasked to retrieve the AED machine.
+          </Text>
+          <Text style={styles.descriptionBullet}>
+            • Follow the map to find the nearest AED machines.
+          </Text>
+          <Text style={styles.descriptionBullet}>
+            • Indicate when the AED is collected by pressing the green button.
+          </Text>
+        </View>
+        <View style={styles.imageRow}>
+          <Image source={AEDDevice} style={styles.aedImage} resizeMode="contain" />
+          <Image source={AEDMapSnippet} style={styles.mapImage} resizeMode="contain" />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -23,54 +47,78 @@ const AEDBuddyTrainingScreen: React.FC<any> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: 'transparent',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#0A2542', // Dark blue header background
+  backgroundContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: 'hidden',
   },
-  backButton: {
-    paddingRight: 10,
+  yellowCircle: {
+    position: 'absolute',
+    width: width * 1.2,
+    height: width * 1.2,
+    bottom: -height * 0.3,
+    right: -width * 0.4,
+    resizeMode: 'contain',
+    opacity: 0.3,
+    transform: [{ rotate: '15deg' }],
   },
-  backButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-  },
-  headerTitle: {
-    paddingTop: 20,
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-    flex: 1, // Allows title to take available space
-    marginRight: 20, // Adjust for back button
+  yellowSLineVector: {
+    position: 'absolute',
+    width: width * 1.0,
+    height: height * 0.6,
+    top: height * 0.1,
+    left: -width * 0.1,
+    resizeMode: 'contain',
+    opacity: 0.3,
+    transform: [{ rotate: '-10deg' }],
   },
   container: {
     flex: 1,
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 30,
+    paddingTop: Platform.OS === 'android' ? ((StatusBar.currentHeight || 0) + 50) : 80,
+    alignItems: 'flex-start', // Align content to the left
+    justifyContent: 'flex-start',
+    backgroundColor: 'transparent',
   },
   title: {
-    fontSize: 26,
+    fontSize: 30,
     fontWeight: 'bold',
     marginBottom: 15,
     color: '#333',
-    textAlign: 'center',
+    textAlign: 'left',
   },
-  description: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 24,
+  descriptionList: {
+    width: '100%', // Ensure the list takes full width for consistent alignment
+    marginBottom: 30, // Space before images
   },
-  comingSoon: {
+  descriptionBullet: {
     fontSize: 18,
-    fontStyle: 'italic',
-    color: '#999',
-    marginTop: 30,
+    color: '#666',
+    textAlign: 'left',
+    lineHeight: 28,
+    marginBottom: 5, // Small margin between bullet points
+  },
+  imageRow: {
+    paddingTop: 250, // Space above the image row
+    flexDirection: 'row',
+    justifyContent: 'space-between', // Distribute images evenly
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 10, // Add some padding within the row
+  },
+  aedImage: {
+    width: width * 0.35, // Adjust size as needed
+    height: width * 0.35, // Adjust size as needed
+    marginRight: 10, // Space between images
+  },
+  mapImage: {
+    width: width * 0.5, // Adjust size as needed
+    height: width * 0.5, // Adjust size as needed
   },
 });
 
