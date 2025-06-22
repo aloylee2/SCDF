@@ -20,7 +20,9 @@ import PostEmergencyOverlay from './src/components/PostEmergencyOverlay';
 import DisabilityScreen from './src/screens/DisabilitySettingsScreen';
 import CPRHeroQuizScreen from './src/screens/CPRHeroQuizScreen';
 import AedBuddyQuizScreen from './src/screens/AedBuddyQuizScreen'; 
-
+import AssistantQuizScreen from './src/screens/AssistantQuizScreen';
+import CrowdControllerQuizScreen from './src/screens/CrowdControllerQuizScreen';
+import VehicleReceiverQuizScreen  from './src/screens/VehicleReceiverQuizScreen';
 
 
 
@@ -77,6 +79,9 @@ export default function App() {
         <Stack.Screen name="DisabilitySettings" component={DisabilityScreen} options={{ headerShown: false }} />
         <Stack.Screen name="CPRHeroQuiz" component={CPRHeroQuizScreen} options={{ headerShown: false }} />
         <Stack.Screen name="AedBuddyQuiz" component={AedBuddyQuizScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="AssistantQuiz" component={AssistantQuizScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="CrowdControllerQuiz" component={CrowdControllerQuizScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="VehicleReceiverQuiz" component={VehicleReceiverQuizScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

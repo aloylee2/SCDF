@@ -1,13 +1,20 @@
 // src/screens/CrowdControllerTrainingScreen.tsx
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Dimensions, Image, Platform, StatusBar } from 'react-native';
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 
 import YellowCircle from '../assets/cpr_man_role_training/yellow_circle.jpg';
 import YellowSLineVector from '../assets/cpr_man_role_training/yellow_s_line_vector.jpg';
 
 const { width, height } = Dimensions.get('window');
 
-const CrowdControllerTrainingScreen: React.FC<any> = ({ navigation }) => {
+const CrowdControllerTrainingScreen: React.FC<any> = () => { // Removed 'navigation' prop
+  const navigation = useNavigation<any>();
+
+  const handleStartQuiz = () => {
+    navigation.navigate('CrowdControllerQuiz'); // Navigate to Crowd Controller Quiz screen
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Background Images */}
@@ -15,7 +22,7 @@ const CrowdControllerTrainingScreen: React.FC<any> = ({ navigation }) => {
         <Image source={YellowCircle} style={styles.yellowCircle} />
         <Image source={YellowSLineVector} style={styles.yellowSLineVector} />
       </View>
-      
+
       {/* Main Content */}
       <View style={styles.container}>
         <Text style={styles.title}>Welcome, Crowd Controller!</Text>
@@ -23,7 +30,10 @@ const CrowdControllerTrainingScreen: React.FC<any> = ({ navigation }) => {
           This section covers techniques for managing crowds during an emergency,
           ensuring safety for both responders and bystanders.
         </Text>
-        <Text style={styles.comingSoon}>More content coming soon!</Text>
+        {/* Quiz Button */}
+        <TouchableOpacity style={styles.quizButton} onPress={handleStartQuiz}>
+          <Text style={styles.quizButtonText}>Start Quiz</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -32,9 +42,8 @@ const CrowdControllerTrainingScreen: React.FC<any> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'transparent', // Changed to transparent
+    backgroundColor: 'transparent',
   },
-  // New Background Styles
   backgroundContainer: {
     position: 'absolute',
     top: 0,
@@ -63,36 +72,16 @@ const styles = StyleSheet.create({
     opacity: 0.3,
     transform: [{ rotate: '-10deg' }],
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#0A2542', // Dark blue header background (kept opaque)
-    paddingTop: Platform.OS === 'android' ? ((StatusBar.currentHeight || 0) + 10) : 15, // Adjusted for status bar
-  },
-  backButton: {
-    paddingRight: 10,
-  },
-  backButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-  },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-    flex: 1,
-    textAlign: 'center',
-  },
   container: {
     flex: 1,
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent', // Changed to transparent
-    paddingTop: 0, // Reset padding top as header handles it
+    backgroundColor: 'transparent',
+    paddingTop: 0,
   },
   title: {
+    paddingTop: Platform.OS === 'android' ? ((StatusBar.currentHeight || 0) + 20) : 50,
     fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 15,
@@ -103,14 +92,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 40, // Increased margin to space from the button
     lineHeight: 24,
   },
-  comingSoon: {
+  quizButton: { // Added quiz button styles
+    backgroundColor: '#007AFF',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    alignSelf: 'center',
+    marginTop: 'auto', // Pushes button to bottom
+    marginBottom: 20,
+  },
+  quizButtonText: {
+    color: 'white',
     fontSize: 18,
-    fontStyle: 'italic',
-    color: '#999',
-    marginTop: 30,
+    fontWeight: 'bold',
   },
 });
 
