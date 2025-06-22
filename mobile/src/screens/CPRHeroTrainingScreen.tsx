@@ -1,14 +1,21 @@
 // src/screens/CPRHeroTrainingScreen.tsx
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Dimensions, Image, Platform, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Dimensions, Image, Platform, StatusBar, TouchableOpacity } from 'react-native'; // Import TouchableOpacity
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 
 import YellowCircle from '../assets/cpr_man_role_training/yellow_circle.jpg';
 import YellowSLineVector from '../assets/cpr_man_role_training/yellow_s_line_vector.jpg';
-import CPRHeroLogo from '../assets/cpr_man_role_training/cpr_hero_logo.jpg'; // Import the CPR Hero specific logo
+import CPRHeroLogo from '../assets/cpr_man_role_training/cpr_hero_logo.jpg';
 
 const { width, height } = Dimensions.get('window');
 
-const CPRHeroTrainingScreen: React.FC<any> = ({ navigation }) => {
+const CPRHeroTrainingScreen: React.FC<any> = () => { // Remove navigation prop, use hook instead
+  const navigation = useNavigation() as any; // Type assertion to bypass TS error
+
+  const handleStartQuiz = () => {
+    navigation.navigate('CPRHeroQuiz'); // Navigate to the new quiz screen
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Background Images */}
@@ -35,6 +42,11 @@ const CPRHeroTrainingScreen: React.FC<any> = ({ navigation }) => {
           </Text>
         </View>
         <Image source={CPRHeroLogo} style={styles.cprLogo} resizeMode="contain" />
+
+        {/* Quiz Button */}
+        <TouchableOpacity style={styles.quizButton} onPress={handleStartQuiz}>
+          <Text style={styles.quizButtonText}>Start Quiz</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -89,21 +101,38 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   descriptionList: {
-    width: '100%', // Ensure the list takes full width for consistent alignment
-    marginBottom: 60, // Space before the logo
+    width: '100%',
+    marginBottom: 60,
   },
   descriptionBullet: {
     fontSize: 18,
     color: '#666',
     textAlign: 'left',
     lineHeight: 28,
-    marginBottom: 5, // Small margin between bullet points
+    marginBottom: 5,
   },
   cprLogo: {
-    paddingTop: 700,
+    // Adjust paddingTop for proper positioning relative to the content and button
+    // It's currently very high, let's place it more logically
     width: 150,
     height: 150,
-    alignSelf: 'center', // Center the logo horizontally
+    alignSelf: 'center',
+    marginTop: 20, // Add some margin from the description list
+    marginBottom: 40, // Space between logo and quiz button
+  },
+  quizButton: {
+    backgroundColor: '#007AFF', // A distinct color for the quiz button
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    alignSelf: 'center', // Center the button
+    marginTop: 'auto', // Push to the bottom of the content area
+    marginBottom: 20, // Margin from the bottom of the screen
+  },
+  quizButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

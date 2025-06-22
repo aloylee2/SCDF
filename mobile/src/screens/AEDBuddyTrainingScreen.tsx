@@ -1,6 +1,7 @@
 // src/screens/AEDBuddhyTrainingScreen.tsx
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Dimensions, Image, Platform, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Dimensions, Image, Platform, StatusBar, TouchableOpacity } from 'react-native'; // Import TouchableOpacity
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 
 // Reusing background images from CPRHeroTrainingScreen
 import YellowCircle from '../assets/cpr_man_role_training/yellow_circle.jpg';
@@ -12,7 +13,13 @@ import AEDMapSnippet from '../assets/aed_buddy_role_training/aed_buddy_map.jpg';
 
 const { width, height } = Dimensions.get('window');
 
-const AEDBuddyTrainingScreen: React.FC<any> = ({ navigation }) => {
+const AEDBuddyTrainingScreen: React.FC<any> = () => { // Remove navigation prop, use hook instead
+  const navigation = useNavigation<any>(); // Use 'any' to bypass type error
+
+  const handleStartQuiz = () => {
+    navigation.navigate('AedBuddyQuiz'); // Navigate to the new AED Buddy quiz screen
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Background Images */}
@@ -39,6 +46,11 @@ const AEDBuddyTrainingScreen: React.FC<any> = ({ navigation }) => {
           <Image source={AEDDevice} style={styles.aedImage} resizeMode="contain" />
           <Image source={AEDMapSnippet} style={styles.mapImage} resizeMode="contain" />
         </View>
+
+        {/* Quiz Button */}
+        <TouchableOpacity style={styles.quizButton} onPress={handleStartQuiz}>
+          <Text style={styles.quizButtonText}>Start Quiz</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -81,7 +93,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 30,
     paddingTop: Platform.OS === 'android' ? ((StatusBar.currentHeight || 0) + 50) : 80,
-    alignItems: 'flex-start', // Align content to the left
+    alignItems: 'flex-start',
     justifyContent: 'flex-start',
     backgroundColor: 'transparent',
   },
@@ -93,32 +105,48 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   descriptionList: {
-    width: '100%', // Ensure the list takes full width for consistent alignment
-    marginBottom: 30, // Space before images
+    width: '100%',
+    marginBottom: 30,
   },
   descriptionBullet: {
     fontSize: 18,
     color: '#666',
     textAlign: 'left',
     lineHeight: 28,
-    marginBottom: 5, // Small margin between bullet points
+    marginBottom: 5,
   },
   imageRow: {
-    paddingTop: 250, // Space above the image row
-    flexDirection: 'row',
-    justifyContent: 'space-between', // Distribute images evenly
-    alignItems: 'center',
+    // Adjust paddingTop for proper positioning relative to the content and button
     width: '100%',
-    paddingHorizontal: 10, // Add some padding within the row
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    marginTop: 20, // Adjusted from paddingTop for better flow
+    marginBottom: 40, // Space between images and quiz button
   },
   aedImage: {
-    width: width * 0.35, // Adjust size as needed
-    height: width * 0.35, // Adjust size as needed
-    marginRight: 10, // Space between images
+    width: width * 0.35,
+    height: width * 0.35,
+    marginRight: 10,
   },
   mapImage: {
-    width: width * 0.5, // Adjust size as needed
-    height: width * 0.5, // Adjust size as needed
+    width: width * 0.5,
+    height: width * 0.5,
+  },
+  quizButton: {
+    backgroundColor: '#007AFF', // A distinct color for the quiz button
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    alignSelf: 'center', // Center the button
+    marginTop: 'auto', // Push to the bottom of the content area
+    marginBottom: 20, // Margin from the bottom of the screen
+  },
+  quizButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

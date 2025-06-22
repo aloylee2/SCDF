@@ -18,7 +18,8 @@ import CrowdControllerTrainingScreen from './src/screens/CrowdControllerTraining
 import VehicleReceiverTrainingScreen from './src/screens/VehicleReceiverTrainingScreen'; // New training screen
 import PostEmergencyOverlay from './src/components/PostEmergencyOverlay';
 import DisabilityScreen from './src/screens/DisabilitySettingsScreen';
-
+import CPRHeroQuizScreen from './src/screens/CPRHeroQuizScreen';
+import AedBuddyQuizScreen from './src/screens/AedBuddyQuizScreen'; 
 
 
 
@@ -74,6 +75,8 @@ export default function App() {
         <Stack.Screen name="CrowdControllerTraining" component={CrowdControllerTrainingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="VehicleReceiverTraining" component={VehicleReceiverTrainingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="DisabilitySettings" component={DisabilityScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="CPRHeroQuiz" component={CPRHeroQuizScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="AedBuddyQuiz" component={AedBuddyQuizScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
