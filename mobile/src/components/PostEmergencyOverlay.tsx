@@ -1,44 +1,51 @@
 // src/components/PostEmergencyOverlay.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
-
-// Import only assets relevant for this initial overlay
-import AiPortrait from '../assets/logos_post_emergency/ai_portrait.jpeg'; // This should be the generated image
+import { aiPortraits } from '../data/aiPortraits'; // Import your data
 
 interface PostEmergencyOverlayProps {
   isVisible: boolean;
   onClose: () => void;
-  // onExpand now takes caseDetails to pass to the next screen
-  onExpand: (details: { date: string; responders: string; description: string }) => void;
-  caseDetails: { // Keep caseDetails here to pass them to the next screen
-    date: string;
-    responders: string;
-    description: string;
-  };
+  onExpand: (details: { image: any; date: string; responders: string; description: string }) => void;
 }
 
 const { width } = Dimensions.get('window');
 
-const PostEmergencyOverlay: React.FC<PostEmergencyOverlayProps> = ({ isVisible, onClose, onExpand, caseDetails }) => {
+const PostEmergencyOverlay: React.FC<PostEmergencyOverlayProps> = ({ isVisible, onClose, onExpand }) => {
+  const [currentPortrait, setCurrentPortrait] = useState<typeof aiPortraits[0] | null>(null);
+
+  useEffect(() => {
+    if (isVisible) {
+      // Randomly select a portrait when the modal becomes visible
+      const randomIndex = Math.floor(Math.random() * aiPortraits.length);
+      setCurrentPortrait(aiPortraits[randomIndex]);
+    } else {
+      setCurrentPortrait(null); // Clear the portrait when hidden
+    }
+  }, [isVisible]);
+
+  if (!currentPortrait) {
+    return null; // Don't render if no portrait is selected yet (or modal is not visible)
+  }
+
   return (
     <Modal
-      animationType="fade" // Or "slide"
+      animationType="fade"
       transparent={true}
       visible={isVisible}
-      onRequestClose={onClose} // Handles Android back button
+      onRequestClose={onClose}
     >
       <TouchableOpacity
         style={styles.overlayBackground}
-        activeOpacity={1} // Keep this at 1 so tapping it doesn't trigger anything other than the onPress
-        onPress={onClose} // Close when tapping outside the central card
+        activeOpacity={1}
+        onPress={onClose}
       >
         <View style={styles.centeredView}>
           <TouchableOpacity
-            activeOpacity={1} // Prevent closing when tapping inside the card
-            onPress={() => {}} // Empty function to consume the touch event
+            activeOpacity={1}
+            onPress={() => {}}
             style={styles.modalView}
           >
-            {/* Header section with text */}
             <View style={styles.headerContainer}>
               <Text style={styles.headerTitle}>WE APPRECIATE YOUR</Text>
               <Text style={styles.headerSubtitle}>HEROIC EFFORTS</Text>
@@ -47,16 +54,13 @@ const PostEmergencyOverlay: React.FC<PostEmergencyOverlayProps> = ({ isVisible, 
               </Text>
             </View>
 
-            {/* AI Generated Image */}
             <Image
-              source={AiPortrait} // Ensure this path is correct and the image exists
+              source={currentPortrait.image} // Use the randomly selected image
               style={styles.heroImage}
               resizeMode="cover"
             />
 
-            {/* Expand Button */}
-            {/* Call onExpand and pass caseDetails */}
-            <TouchableOpacity style={styles.expandButton} onPress={() => onExpand(caseDetails)}>
+            <TouchableOpacity style={styles.expandButton} onPress={() => onExpand(currentPortrait)}>
               <Text style={styles.expandButtonText}>CLICK TO EXPAND</Text>
             </TouchableOpacity>
 
@@ -74,13 +78,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent black background
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%', // Take full width
+    width: '100%',
   },
   modalView: {
     margin: 20,
@@ -96,9 +100,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
-    width: width * 0.9, // Adjust width to be 90% of screen width
-    // Removed explicit height to allow content to dictate height, but if it looks too tall,
-    // you might need a maxHeight and make sections scrollable.
+    width: width * 0.9,
   },
   headerContainer: {
     alignItems: 'center',
@@ -107,11 +109,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FF0000', // Red color for "WE APPRECIATE YOUR"
+    color: '#FF0000',
     textAlign: 'center',
   },
   headerSubtitle: {
-    fontSize: 28, // Larger for "HEROIC EFFORTS"
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#FF0000',
     textAlign: 'center',
@@ -125,17 +127,17 @@ const styles = StyleSheet.create({
   },
   heroImage: {
     width: '100%',
-    height: width * 0.5, // Make image height proportional to width
+    height: width * 0.5,
     borderRadius: 10,
     marginBottom: 15,
   },
   expandButton: {
-    backgroundColor: '#FF0000', // Red button
+    backgroundColor: '#FF0000',
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 20,
     marginBottom: 15,
-    width: '90%', // Make button slightly narrower than full width
+    width: '90%',
     alignItems: 'center',
   },
   expandButtonText: {
