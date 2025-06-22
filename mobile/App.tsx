@@ -23,7 +23,7 @@ import AedBuddyQuizScreen from './src/screens/AedBuddyQuizScreen';
 import AssistantQuizScreen from './src/screens/AssistantQuizScreen';
 import CrowdControllerQuizScreen from './src/screens/CrowdControllerQuizScreen';
 import VehicleReceiverQuizScreen  from './src/screens/VehicleReceiverQuizScreen';
-
+import TestScreen from './src/screens/TestScreen'; // Import your TestScreen
 
 
 const Stack = createNativeStackNavigator();
@@ -57,6 +57,7 @@ function HomeScreen({ navigation }: any) {
       <Button title="Go to Dashboard" onPress={() => navigation.navigate('Dashboard')} />
       <Button title="Go to View More" onPress={() => navigation.navigate('ViewMore')} />
       <Button title="Go to Disability Settings" onPress={() => navigation.navigate('DisabilitySettings')} />
+      <Button title="ModalTestScreen" onPress={() => navigation.navigate('TestScreen')} />
     </View>
   );
 }
@@ -82,6 +83,8 @@ export default function App() {
         <Stack.Screen name="AssistantQuiz" component={AssistantQuizScreen} options={{ headerShown: false }} />
         <Stack.Screen name="CrowdControllerQuiz" component={CrowdControllerQuizScreen} options={{ headerShown: false }} />
         <Stack.Screen name="VehicleReceiverQuiz" component={VehicleReceiverQuizScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="TestScreen" component={TestScreen} options={{ headerShown: false }} />
+        {/* Add more screens as needed */}
       </Stack.Navigator>
     </NavigationContainer>
   );
