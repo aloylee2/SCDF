@@ -25,21 +25,87 @@ interface AEDLocation {
   dist?: number;
 }
 
-const GOOGLE_MAPS_APIKEY = 'AIzaSyDk1kEjLArSQqX2mF5jT1B_1k_tX2Gu1XE'; // <-- Put your Google API key here
+const GOOGLE_MAPS_APIKEY = 'AIzaSyDk1kEjLArSQqX2mF5jT1B_1k_tX2Gu1XE'; // <-- Your key here
 
 export default function ViewMoreScreen() {
   const [locations, setLocations] = useState<AEDLocation[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
   const [routeCoords, setRouteCoords] = useState<LatLng[]>([]);
+  const [nearestToPatient, setNearestToPatient] = useState<AEDLocation | null>(null);
+  const [nearestAED, setNearestAED] = useState<AEDLocation | null>(null);
+  const [nearbyAEDs, setNearbyAEDs] = useState<AEDLocation[]>([]);
+  const [showNearbyPatientPins, setShowNearbyPatientPins] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const nearestAEDMarkerRef = useRef<any>(null);
+  const nearestNearbyAEDMarkerRef = useRef<any>(null);
   const mapRef = useRef<MapView>(null);
 
+  //Hardcoded patient location
+  const patientLocation: LatLng = {
+    latitude: 1.3000, //  patient lat
+    longitude: 103.8000, // patient lng
+  };
+
   useEffect(() => {
-    fetch('http://10.0.2.2:5000/aed_locations')
-      .then(res => res.json())
-      .then(data => setLocations(data))
-      .catch(console.error);
+    setLoading(true);
+    setFetchError(null);
+    fetch('http://10.0.2.2:5000/aed-locations')
+      .then(res => {
+        console.log('Fetch status:', res.status);
+        return res.json();
+      })
+      .then(data => {
+        console.log('Fetched AED locations:', data);
+        setLocations(data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+        setFetchError('Network Error: ' + error.message);
+        setLoading(false);
+        Alert.alert('Network Error', error.message);
+      });
   }, []);
+
+  useEffect(() => {
+    // Show callout for nearest AED if set
+    if (nearestAEDMarkerRef.current) {
+      setTimeout(() => {
+        nearestAEDMarkerRef.current.showCallout();
+      }, 500);
+    }
+  }, [nearestAED]);
+
+  // Find nearest AED to patient whenever locations update
+  useEffect(() => {
+    if (!locations.length) {
+      setNearestToPatient(null);
+      return;
+    }
+    const nearest = locations.reduce((nearestSoFar, loc) => {
+      const dist = getDistance(
+        patientLocation.latitude,
+        patientLocation.longitude,
+        loc.latitude,
+        loc.longitude
+      );
+      return !nearestSoFar || dist < (nearestSoFar.dist ?? Infinity)
+        ? { ...loc, dist }
+        : nearestSoFar;
+    }, null as AEDLocation | null);
+    setNearestToPatient(nearest);
+  }, [locations]);
+
+  useEffect(() => {
+    // Auto-show callout for nearest AED within 400m when locations update
+    if (nearestNearbyAEDMarkerRef.current && nearbyAEDs.length) {
+      setTimeout(() => {
+        nearestNearbyAEDMarkerRef.current.showCallout();
+      }, 500);
+    }
+  }, [nearbyAEDs]);
 
   const requestLocationPermission = async () => {
     if (Platform.OS === 'android') {
@@ -100,7 +166,129 @@ export default function ViewMoreScreen() {
     }, null as AEDLocation | null);
   };
 
-  // Decode Google encoded polyline string to LatLng[]
+  const handleFindNearest = async () => {
+    setShowNearbyPatientPins(false); // <-- Reset flag when using other button
+    const loc = await getCurrentLocation();
+    if (!loc) {
+      Alert.alert('Location Error', 'Location permission denied or unavailable.');
+      return;
+    }
+
+    const nearest = findNearestAED(loc);
+    setNearestAED(nearest); // Track nearest AED
+    if (!nearest) {
+      Alert.alert('AED Not Found', 'No AED found.');
+      return;
+    }
+
+    if (!mapRef.current) return;
+
+    const origin = `${loc.latitude},${loc.longitude}`;
+    const destination = `${nearest.latitude},${nearest.longitude}`;
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${GOOGLE_MAPS_APIKEY}&mode=walking`;
+
+    try {
+      const response = await fetch(url);
+      const json = await response.json();
+      if (json.routes.length) {
+        const points = decodePolyline(json.routes[0].overview_polyline.points);
+        setRouteCoords(points);
+        mapRef.current.fitToCoordinates(points, {
+          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+          animated: true,
+        });
+      } else {
+        setRouteCoords([
+          { latitude: loc.latitude, longitude: loc.longitude },
+          { latitude: nearest.latitude, longitude: nearest.longitude },
+        ]);
+      }
+    } catch (error) {
+      console.warn(error);
+      Alert.alert('Network Error', 'Failed to fetch directions.');
+    }
+  };
+
+  const handleRouteNearestToPatient = async () => {
+    if (!nearestToPatient) {
+      Alert.alert('No AED', 'No nearest AED to patient found.');
+      return;
+    }
+    setShowNearbyPatientPins(false); // reset to force re-render if needed
+    setTimeout(() => setShowNearbyPatientPins(true), 0);
+
+    const origin = `${nearestToPatient.latitude},${nearestToPatient.longitude}`;
+    const destination = `${patientLocation.latitude},${patientLocation.longitude}`;
+  
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${GOOGLE_MAPS_APIKEY}&mode=walking`;
+
+    try {
+      const response = await fetch(url);
+      const json = await response.json();
+      if (json.routes.length) {
+        const points = decodePolyline(json.routes[0].overview_polyline.points);
+        setRouteCoords(points);
+        mapRef.current?.fitToCoordinates(points, {
+          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+          animated: true,
+        });
+      } else {
+        setRouteCoords([
+          { latitude: nearestToPatient.latitude, longitude: nearestToPatient.longitude },
+          { latitude: patientLocation.latitude, longitude: patientLocation.longitude },
+        ]);
+      }
+    } catch (error) {
+      console.warn(error);
+      Alert.alert('Network Error', 'Failed to fetch directions.');
+    }
+  };
+
+  const filterNearbyAEDsToPatient = () => {
+    const filtered = locations
+      .map(loc => {
+        const dist = getDistance(
+          patientLocation.latitude,
+          patientLocation.longitude,
+          loc.latitude,
+          loc.longitude
+        );
+        return { ...loc, dist };
+      });
+      //.filter(loc => loc.dist! <= 400);
+
+    setNearbyAEDs(filtered);
+    setShowNearbyPatientPins(false); // force reset first
+    setTimeout(() => {
+      setShowNearbyPatientPins(true); // then enable, to force re-render
+      handleRouteNearestToPatient(); // <-- This draws the walking route
+    }, 0);
+
+    if (!filtered.length) {
+      Alert.alert('No Nearby AEDs', 'No AEDs found within 400m of the patient.');
+      return;
+    }
+    // Find nearest among filtered
+    const nearest = filtered.reduce((nearestSoFar, loc) =>
+      !nearestSoFar || loc.dist! < (nearestSoFar.dist ?? Infinity) ? loc : nearestSoFar,
+      null as AEDLocation | null
+    );
+    setNearestToPatient(nearest);
+    setTimeout(() => {
+      if (nearestNearbyAEDMarkerRef.current) {
+        nearestNearbyAEDMarkerRef.current.showCallout();
+      }
+    }, 500);
+    setRouteCoords([]);
+    mapRef.current?.fitToCoordinates(
+      filtered.map(loc => ({ latitude: loc.latitude, longitude: loc.longitude })),
+      {
+        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+        animated: true,
+      }
+    );
+  };
+
   const decodePolyline = (encoded: string): LatLng[] => {
     let points: LatLng[] = [];
     let index = 0, len = encoded.length;
@@ -132,50 +320,9 @@ export default function ViewMoreScreen() {
     return points;
   };
 
-  const handleFindNearest = async () => {
-    const loc = await getCurrentLocation();
-    if (!loc) {
-      Alert.alert('Location Error', 'Location permission denied or unavailable.');
-      return;
-    }
-
-    const nearest = findNearestAED(loc);
-    if (!nearest) {
-      Alert.alert('AED Not Found', 'No AED found.');
-      return;
-    }
-
-    if (!mapRef.current) return;
-
-    const origin = `${loc.latitude},${loc.longitude}`;
-    const destination = `${nearest.latitude},${nearest.longitude}`;
-    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${GOOGLE_MAPS_APIKEY}&mode=walking`;
-
-    try {
-      const response = await fetch(url);
-      const json = await response.json();
-      if (json.routes.length) {
-        const points = decodePolyline(json.routes[0].overview_polyline.points);
-        setRouteCoords(points);
-
-        // Animate map to show entire route with padding
-        mapRef.current.fitToCoordinates(points, {
-          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
-          animated: true,
-        });
-      } else {
-        Alert.alert('Route Error', 'Could not find route.');
-        // Fallback: show simple line
-        setRouteCoords([
-          { latitude: loc.latitude, longitude: loc.longitude },
-          { latitude: nearest.latitude, longitude: nearest.longitude },
-        ]);
-      }
-    } catch (error) {
-      console.warn(error);
-      Alert.alert('Network Error', 'Failed to fetch directions.');
-    }
-  };
+  // Helper to compare coordinates with tolerance
+  const isSameLocation = (a: LatLng, b: LatLng) =>
+    Math.abs(a.latitude - b.latitude) < 1e-6 && Math.abs(a.longitude - b.longitude) < 1e-6;
 
   return (
     <View style={styles.container}>
@@ -189,21 +336,76 @@ export default function ViewMoreScreen() {
           longitudeDelta: 0.1,
         }}
       >
-        {locations.map((loc, idx) => (
+        {/* Show message if loading or error, else show pins */}
+        {loading ? (
           <Marker
-            key={idx}
-            coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
-            pinColor="red"
+            coordinate={{ latitude: 1.3521, longitude: 103.8198 }}
+            pinColor="gray"
           >
             <Callout>
-              <View style={styles.callout}>
-                <Text style={styles.calloutTitle}>🫀 AED at {loc.building}</Text>
-                <Text>{loc.description}</Text>
-                <Text>Postal Code: {loc.postal_code}</Text>
-              </View>
+              <Text>Loading AED locations...</Text>
             </Callout>
           </Marker>
-        ))}
+        ) : fetchError ? (
+          <Marker
+            coordinate={{ latitude: 1.3521, longitude: 103.8198 }}
+            pinColor="gray"
+          >
+            <Callout>
+              <Text>{fetchError}</Text>
+            </Callout>
+          </Marker>
+        ) : (
+          locations.map((loc, idx) => {
+            let pinColor = 'red';
+            const isNearestNearby =
+              nearestToPatient && isSameLocation(loc, nearestToPatient);
+            const isNearest =
+              nearestAED && isSameLocation(loc, nearestAED);
+
+            if (showNearbyPatientPins) {
+              pinColor = 'purple';
+            } else if (isNearestNearby) {
+              pinColor = 'red';
+            } else if (isNearest) {
+              pinColor = 'green';
+            }
+
+            return (
+              <Marker
+                key={idx}
+                coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
+                pinColor={pinColor}
+                ref={
+                  (showNearbyPatientPins && nearestToPatient && isSameLocation(loc, nearestToPatient)) ||
+                  (!showNearbyPatientPins && nearestToPatient && isSameLocation(loc, nearestToPatient))
+                    ? nearestNearbyAEDMarkerRef
+                    : (!showNearbyPatientPins && nearestAED && isSameLocation(loc, nearestAED))
+                    ? nearestAEDMarkerRef
+                    : undefined
+                }
+              >
+                <Callout>
+                  <View style={styles.callout}>
+                    <Text style={styles.calloutTitle}>🫀 AED at {loc.building}</Text>
+                    <Text>{loc.description}</Text>
+                    <Text>Postal Code: {loc.postal_code}</Text>
+                    {isNearestNearby && (
+                      <Text style={{ color: 'purple', fontWeight: 'bold', marginTop: 4 }}>
+                        Nearest AED to Patient!
+                      </Text>
+                    )}
+                    {isNearest && !isNearestNearby && (
+                      <Text style={{ color: 'green', fontWeight: 'bold', marginTop: 4 }}>
+                        Nearest AED to You!
+                      </Text>
+                    )}
+                  </View>
+                </Callout>
+              </Marker>
+            );
+          })
+        )}
 
         {userLocation && (
           <Marker
@@ -212,6 +414,13 @@ export default function ViewMoreScreen() {
             title="Your Location"
           />
         )}
+
+        {/* ✅ Patient Location Marker */}
+        <Marker
+          coordinate={patientLocation}
+          pinColor="orange"
+          title="Patient Location"
+        />
 
         {routeCoords.length > 1 && (
           <Polyline
@@ -231,6 +440,14 @@ export default function ViewMoreScreen() {
         onPress={handleFindNearest}
       >
         <Text style={styles.buttonText}>Find Nearest AED</Text>
+      </TouchableOpacity>
+
+      {/* ✅ New button for 400m filter */}
+      <TouchableOpacity
+        style={[styles.viewMoreButton, { bottom: 160, backgroundColor: 'purple' }]}
+        onPress={filterNearbyAEDsToPatient}
+      >
+        <Text style={styles.buttonText}>AEDs Near Patient</Text>
       </TouchableOpacity>
 
       <Modal visible={modalVisible} animationType="slide">

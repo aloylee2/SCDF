@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, jsonify
 import os
 import requests
+from geopy.distance import geodesic
 
 app = Flask(__name__)
 
@@ -27,8 +28,52 @@ class User(db.Model):
 def index():
     return {"message": "Backend connected to PostgreSQL!"}
 
-@app.route('/aed_locations')
+# @app.route('/aed_locations')
+# def get_aed_locations():
+#     dataset_id = "d_e8934d28896a1eceecfe86f42dd3c077"
+#     url = f"https://data.gov.sg/api/action/datastore_search?resource_id={dataset_id}"
+#     records = requests.get(url).json()['result']['records']
+
+#     locations = []
+
+#     for record in records:
+#         postal = record.get('Postal_Code')
+#         building = record.get('Building_Name', 'Unknown')
+#         desc = record.get('Location_Description', '')
+
+#         lat = lon = None
+#         if postal:
+#             try:
+#                 resp = requests.get(
+#                     "https://www.onemap.gov.sg/api/common/elastic/search",
+#                     params={"searchVal": postal, "returnGeom": "Y", "getAddrDetails": "Y"}
+#                 )
+#                 data = resp.json()
+#                 results = data.get("results", [])
+#                 if results:
+#                     lat = float(results[0]["LATITUDE"])
+#                     lon = float(results[0]["LONGITUDE"])
+#             except Exception as e:
+#                 print(f"Geocode error for {postal}: {e}")
+
+#         if lat and lon:
+#             locations.append({
+#                 "latitude": lat,
+#                 "longitude": lon,
+#                 "building": building,
+#                 "description": desc,
+#                 "postal_code": postal
+#             })
+
+#     return jsonify(locations)
+
+@app.route('/aed-locations')
 def get_aed_locations():
+    # Hardcoded patient location
+    patient_lat = 1.3048
+    patient_lon = 103.8318
+    patient_coords = (patient_lat, patient_lon)
+
     dataset_id = "d_e8934d28896a1eceecfe86f42dd3c077"
     url = f"https://data.gov.sg/api/action/datastore_search?resource_id={dataset_id}"
     records = requests.get(url).json()['result']['records']
@@ -56,13 +101,22 @@ def get_aed_locations():
                 print(f"Geocode error for {postal}: {e}")
 
         if lat and lon:
-            locations.append({
-                "latitude": lat,
-                "longitude": lon,
-                "building": building,
-                "description": desc,
-                "postal_code": postal
-            })
+            aed_coords = (lat, lon)
+            distance_m = geodesic(patient_coords, aed_coords).meters
+
+            # Only keep AEDs within 400m
+            if distance_m > 0:
+                locations.append({
+                    "latitude": lat,
+                    "longitude": lon,
+                    "building": building,
+                    "description": desc,
+                    "postal_code": postal,
+                    "distance_m": round(distance_m, 1)
+                })
+
+    # Sort by distance ascending
+    locations.sort(key=lambda x: x["distance_m"])
 
     return jsonify(locations)
 
