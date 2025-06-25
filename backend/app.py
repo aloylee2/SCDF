@@ -158,18 +158,21 @@ def create_incident():
     _incidents[_next_incident_id] = inc
     _next_incident_id += 1
 
-    # Check for nearby responders
+    # Check for nearby responders within <=400m
     nearby_users = []
-    patient_coords = (inc["latitude"], inc["latitude"])
+    patient_coords = (inc["latitude"], inc["longitude"])
     for user_id, loc in user_locations.items():
         user_coords = (loc['latitude'], loc['longitude'])
         distance = geodesic(patient_coords, user_coords).meters
         if distance <= 400:
             nearby_users.append({"user_id": user_id, "distance": distance})
-    
-    # A way to notify nearby users a case is happening then popup case acceptance form
 
-    return inc
+    # A way to notify nearby users a case is happening then popup case acceptance form
+    return jsonify({
+        "incident": inc,
+        "nearby_users": nearby_users
+    })
+    
 
 def get_incident(incident_id):
     return _incidents.get(incident_id)
