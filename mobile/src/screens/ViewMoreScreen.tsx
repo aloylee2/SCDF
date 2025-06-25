@@ -44,14 +44,23 @@ export default function ViewMoreScreen() {
 
   //Hardcoded patient location
   const patientLocation: LatLng = {
-    latitude: 1.3000, //  patient lat
-    longitude: 103.8000, // patient lng
+    latitude: 1.3513, //  patient lat
+    longitude: 103.8443, // patient lng
   };
 
   useEffect(() => {
     setLoading(true);
     setFetchError(null);
-    fetch('http://10.0.2.2:5000/aed-locations')
+    fetch('http://10.0.2.2:5000/aed-locations', {
+    // POST Method
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      latitude: patientLocation.latitude,
+      longitude: patientLocation.longitude,
+    }),
+  })
+    // GET Method
       .then(res => {
         console.log('Fetch status:', res.status);
         return res.json();
@@ -320,9 +329,26 @@ export default function ViewMoreScreen() {
     return points;
   };
 
+  const startCase = async ()=>{
+    try{
+      await fetch('http://10.0.2.2:5000/case-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json'},
+        body: JSON.stringify({ 
+          latitude: patientLocation.latitude, 
+          longitude: patientLocation.longitude 
+        }),
+      });
+    }catch(error){
+      console.error("Error starting case:", error);
+  }
+};
+
   // Helper to compare coordinates with tolerance
   const isSameLocation = (a: LatLng, b: LatLng) =>
     Math.abs(a.latitude - b.latitude) < 1e-6 && Math.abs(a.longitude - b.longitude) < 1e-6;
+
+
 
   return (
     <View style={styles.container}>
@@ -470,6 +496,14 @@ export default function ViewMoreScreen() {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      {/* ✅ New button to start case */}
+      <TouchableOpacity
+        style={[styles.viewMoreButton, { bottom: 220, backgroundColor: 'blue' }]}
+        onPress={startCase}
+      >
+        <Text style={styles.buttonText}>Start Case</Text>
+      </TouchableOpacity>
     </View>
   );
 }
