@@ -1,5 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo,  } from 'react';
 import { Alert, Platform, PermissionsAndroid } from 'react-native';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
+import { AlertBanner } from './role-engine_screen/AlertBanner';
 import {
   View,
   Text,
@@ -41,6 +43,8 @@ export default function ViewMoreScreen() {
   const nearestAEDMarkerRef = useRef<any>(null);
   const nearestNearbyAEDMarkerRef = useRef<any>(null);
   const mapRef = useRef<MapView>(null);
+  const [showAlertBanner, setShowAlertBanner] = useState(false);
+  const [activeChip, setActiveChip] = useState<'walk' | 'car' | 'bike'>('walk');
 
   //Hardcoded patient location
   const patientLocation: LatLng = {
@@ -150,7 +154,7 @@ export default function ViewMoreScreen() {
   const toRadians = (deg: number) => (deg * Math.PI) / 180;
 
   const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371e3;
+    const R = 6371e3;1
     const dLat = toRadians(lat2 - lat1);
     const dLon = toRadians(lon2 - lon1);
     const a =
@@ -343,16 +347,57 @@ export default function ViewMoreScreen() {
     }catch(error){
       console.error("Error starting case:", error);
   }
-};
+  };
+
+  // Check if AlertBanner is defined and log its type
+  if (typeof AlertBanner === 'undefined') {
+    console.warn('❌❌❌ AlertBanner is undefined! Check your import/export.');
+  } else {
+    console.log('✅✅✅ AlertBanner import type:', typeof AlertBanner, AlertBanner);
+  }
 
   // Helper to compare coordinates with tolerance
   const isSameLocation = (a: LatLng, b: LatLng) =>
     Math.abs(a.latitude - b.latitude) < 1e-6 && Math.abs(a.longitude - b.longitude) < 1e-6;
 
-
-
   return (
     <View style={styles.container}>
+      {/* Top Popup */}
+      <View style={styles.timerRow}>
+        <Text>
+          <Text style={styles.timerNumber}>0</Text>
+          <Text style={styles.timerUnit}>min</Text>
+          <Text style={styles.timerNumber}> 0</Text>
+          <Text style={styles.timerUnit}>sec</Text>
+          <Text style={styles.timerSince}>  since emergency happened</Text>
+        </Text>
+      </View>
+      
+      <View style={[styles.transportRow, {position: 'absolute', top: 60, left: 0, right: 0, zIndex: 1}]}>
+      <TouchableOpacity
+        style={[styles.chip, activeChip === 'walk' && styles.chipActive]}
+        onPress={() => setActiveChip('walk')}
+      >
+        <Text style={[styles.chipIcon, activeChip === 'walk' && {color: 'white'}]}>🚶‍♂️</Text>
+        <Text style={[styles.chipText, activeChip === 'walk' && {color: 'white'}]}>4 min</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.chip, activeChip === 'car' && styles.chipActive]}
+        onPress={() => setActiveChip('car')}
+      >
+        <Text style={[styles.chipIcon, activeChip === 'car' && {color: 'white'}]}>🚗</Text>
+        <Text style={[styles.chipText, activeChip === 'car' && {color: 'white'}]}>2 min</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.chip, activeChip === 'bike' && styles.chipActive]}
+        onPress={() => setActiveChip('bike')}
+      >
+        <Text style={[styles.chipIcon, activeChip === 'bike' && {color: 'white'}]}>🏍️</Text>
+        <Text style={[styles.chipText, activeChip === 'bike' && {color: 'white'}]}>2 min</Text>
+      </TouchableOpacity>
+    </View>
+
+      {/* Map */}
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -505,6 +550,26 @@ export default function ViewMoreScreen() {
       >
         <Text style={styles.buttonText}>Start Case</Text>
       </TouchableOpacity>
+
+      {/* ✅ New button to trigger scenario */}
+      <TouchableOpacity
+        style={[styles.viewMoreButton, { bottom: 280, backgroundColor: 'maroon' }]}
+        onPress={() => setShowAlertBanner(true)}
+      >
+        <Text style={styles.buttonText}>Show Alert Banner</Text>
+      </TouchableOpacity>
+      
+      {showAlertBanner && (
+        <View style={styles.container}>
+        <AlertBanner
+          visible={showAlertBanner}
+          onAccept={() => setShowAlertBanner(false)}
+          onDecline={() => setShowAlertBanner(false)}
+          children={"This is a test alert banner!"}
+          // ...other props as needed
+        />
+        </View>
+      )}
     </View>
   );
 }
@@ -512,6 +577,7 @@ export default function ViewMoreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
   map: {
     flex: 1,
@@ -537,7 +603,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: 'red',
   },
   modalTitle: {
     fontSize: 24,
@@ -566,5 +632,63 @@ const styles = StyleSheet.create({
   closeButton: {
     backgroundColor: '#999',
     marginTop: 20,
+  },
+
+  // Top Banner 
+  timerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    paddingVertical: 8,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  timerNumber: {
+    color: '#B22222',
+    fontWeight: 'bold',
+    fontSize: 28,
+  },
+  timerUnit: {
+    color: '#B22222',
+    fontSize: 18,
+    fontWeight: '400',
+    marginRight: 8,
+  },
+  timerSince: {
+    color: '#B22222',
+    fontSize: 18,
+    fontWeight: '400',
+    marginLeft: 8,
+  },
+  transportRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    marginHorizontal: 4,
+  },
+  chipActive: {
+    backgroundColor: '#223F87',
+  },
+  chipIcon: {
+    fontSize: 18,
+    marginRight: 6,
+    color: '#223F87',
+  },
+  chipText: {
+    fontSize: 16,
+    color: '#223F87',
+    fontWeight: '500',
   },
 });

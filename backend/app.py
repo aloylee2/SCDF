@@ -151,7 +151,6 @@ def create_incident():
         "latitude": lat,
         "longitude": lon,
         "responders": {
-            "cfr1" : {},
             "cfr2" : {} # we hard code this for now but we will remove later this is for testings as of now
         }
     }

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { View, Text, StyleSheet, Button } from 'react-native';
 import { fetchData } from './src/services/api';
-
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SecondScreen from './src/screens/SecondScreen';
@@ -24,7 +25,8 @@ import AssistantQuizScreen from './src/screens/AssistantQuizScreen';
 import CrowdControllerQuizScreen from './src/screens/CrowdControllerQuizScreen';
 import VehicleReceiverQuizScreen  from './src/screens/VehicleReceiverQuizScreen';
 import TestScreen from './src/screens/TestScreen'; // Import your TestScreen
-
+import ScenarioScreen from './src/screens/ScenarioScreen';
+import { AlertBanner } from './src/screens/role-engine_screen/AlertBanner';
 
 const Stack = createNativeStackNavigator();
 function HomeScreen({ navigation }: any) {
@@ -49,6 +51,11 @@ function HomeScreen({ navigation }: any) {
   
   return (
     <View style={styles.container}>
+      {/* <AlertBanner visible={false} onAccept={function (): void {
+        throw new Error('Function not implemented.');
+      } } onDecline={function (): void {
+        throw new Error('Function not implemented.');
+      } } /> */}
       <Text style={styles.title}>Hello World!</Text>
       <Text style={styles.text}>
         Backend data: {data ? JSON.stringify(data) : 'Loading...'}
@@ -58,35 +65,41 @@ function HomeScreen({ navigation }: any) {
       <Button title="Go to View More" onPress={() => navigation.navigate('ViewMore')} />
       <Button title="Go to Disability Settings" onPress={() => navigation.navigate('DisabilitySettings')} />
       <Button title="ModalTestScreen" onPress={() => navigation.navigate('TestScreen')} />
+      <Button title="Scenario Screen" onPress={() => navigation.navigate('ScenarioScreen')} />
     </View>
   );
 }
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Second" component={SecondScreen} />
-        <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="PostEmergencyDetail" component={PostEmergencyDetailScreen} />
-        <Stack.Screen name="ViewMore" component={ViewMoreScreen} />
-        <Stack.Screen name="LearnYourRoles" component={LearnYourRolesScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="CPRHeroTraining" component={CPRHeroTrainingScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AEDBuddyTraining" component={AEDBuddyTrainingScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AssistantTraining" component={AssistantTrainingScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="CrowdControllerTraining" component={CrowdControllerTrainingScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="VehicleReceiverTraining" component={VehicleReceiverTrainingScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="DisabilitySettings" component={DisabilityScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="CPRHeroQuiz" component={CPRHeroQuizScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AedBuddyQuiz" component={AedBuddyQuizScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AssistantQuiz" component={AssistantQuizScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="CrowdControllerQuiz" component={CrowdControllerQuizScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="VehicleReceiverQuiz" component={VehicleReceiverQuizScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="TestScreen" component={TestScreen} options={{ headerShown: false }} />
-        {/* Add more screens as needed */}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <BottomSheetModalProvider> 
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Home">
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Second" component={SecondScreen} />
+          <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="PostEmergencyDetail" component={PostEmergencyDetailScreen} />
+          <Stack.Screen name="ViewMore" component={ViewMoreScreen} />
+          <Stack.Screen name="LearnYourRoles" component={LearnYourRolesScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="CPRHeroTraining" component={CPRHeroTrainingScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="AEDBuddyTraining" component={AEDBuddyTrainingScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="AssistantTraining" component={AssistantTrainingScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="CrowdControllerTraining" component={CrowdControllerTrainingScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="VehicleReceiverTraining" component={VehicleReceiverTrainingScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="DisabilitySettings" component={DisabilityScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="CPRHeroQuiz" component={CPRHeroQuizScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="AedBuddyQuiz" component={AedBuddyQuizScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="AssistantQuiz" component={AssistantQuizScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="CrowdControllerQuiz" component={CrowdControllerQuizScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="VehicleReceiverQuiz" component={VehicleReceiverQuizScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="TestScreen" component={TestScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ScenarioScreen" component={ScenarioScreen} options={{ headerShown: false }} />
+          {/* Add more screens as needed */}
+        </Stack.Navigator>
+      </NavigationContainer>
+       </BottomSheetModalProvider>
+    </GestureHandlerRootView>
   );
 }
 
