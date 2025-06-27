@@ -10,7 +10,7 @@ import InstagramLogo from '../assets/logos_post_emergency/instagram_logo.png';
 import FacebookLogo from '../assets/logos_post_emergency/facebook_logo.png';
 import TikTokLogo from '../assets/logos_post_emergency/tiktok_logo.png';
 // You no longer import AiPortrait directly here as it comes from params
-import SaveIcon from '../assets/logos_post_emergency/save_icon_logo.png';
+import SaveIcon from '../assets/logos_post_emergency/save_icon_logo.png'; 
 
 const { width } = Dimensions.get('window');
 
