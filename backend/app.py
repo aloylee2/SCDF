@@ -6,7 +6,36 @@ import requests
 from geopy.distance import geodesic
 from datetime import datetime, timedelta
 
+from flask_cors import CORS
+from datetime import datetime
+
 app = Flask(__name__)
+CORS(app)
+
+#hold the roles assigned to users
+assigned_roles = {}
+
+@app.route('/assign-role', methods=['POST'])
+def assign_role():
+    data = request.json
+    device_id = data.get('device_id')
+    print(f"Received device_id: {device_id}")
+    print("Current assigned roles:", assigned_roles)
+
+    if device_id in assigned_roles:
+        role = assigned_roles[device_id]
+    elif "A" not in assigned_roles.values():
+        role = "A"
+        assigned_roles[device_id] = role
+    elif "B" not in assigned_roles.values():
+        role = "B"
+        assigned_roles[device_id] = role
+    else:
+        role = "None"
+
+    print(f"Assigned role for {device_id}: {role}")
+    return jsonify({"role": role, "assigned_at": datetime.utcnow().isoformat()})
+
 
 # Use DATABASE_URL env variable if set (inside Docker),
 # else fallback to localhost connection string for local dev.

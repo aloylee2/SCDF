@@ -28,7 +28,37 @@ import TestScreen from './src/screens/TestScreen'; // Import your TestScreen
 import ScenarioScreen from './src/screens/ScenarioScreen';
 import { AlertBanner } from './src/screens/role-engine_screen/AlertBanner';
 
-const Stack = createNativeStackNavigator();
+
+import RoleScreen from './src/screens/RoleScreen';
+import ScreenA from './src/screens/ScreenA';
+import ScreenB from './src/screens/ScreenB';
+
+export type RootStackParamList = {
+  RoleScreen: undefined;
+  ScreenA: undefined;
+  ScreenB: undefined;
+  Home: undefined;
+  Second: undefined;
+  Dashboard: undefined;
+  PostEmergencyDetail: undefined;
+  ViewMore: undefined;
+  LearnYourRoles: undefined;
+  CPRHeroTraining: undefined;
+  AEDBuddyTraining: undefined;
+  AssistantTraining: undefined;
+  CrowdControllerTraining: undefined;
+  VehicleReceiverTraining: undefined;
+  DisabilitySettings: undefined;
+  CPRHeroQuiz: undefined;
+  AedBuddyQuiz: undefined;
+  AssistantQuiz: undefined;
+  CrowdControllerQuiz: undefined;
+  VehicleReceiverQuiz: undefined;
+  TestScreen: undefined;
+  ScenarioScreen: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 function HomeScreen({ navigation }: any) {
   const [data, setData] = useState<string | null>(null);
 
@@ -75,7 +105,13 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider> 
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Home">
+        <Stack.Navigator initialRouteName="RoleScreen">
+
+        <Stack.Screen name="RoleScreen" component={RoleScreen} />
+        <Stack.Screen name="ScreenA" component={ScreenA} />
+        <Stack.Screen name="ScreenB" component={ScreenB} />
+
+
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Second" component={SecondScreen} />
           <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ headerShown: false }} />
