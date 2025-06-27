@@ -76,4 +76,25 @@ Set up GUI for PostgreSQL:
   - Database: scdf_db
 
 =====================================================================================
+(Using Virtual Environment (Windows)):
+
+step1: Go to your backend folder
+cd backend
+
+step2: Activate the virtual environment
+venv_windows\Scripts\activate
+
+step3: Activate Flask
+flask run
+
+=====================================================================================
+Error for -> While trying to resolve module @gorhom/portal from file, the package was successfully found. However, this package itself specifies a main module field that could not be resolved
+
+step1: Go to mobile folder
+cd mobile
+
+step2: Install missing dependency
+npm install @gorhom/portal
+
+=====================================================================================
 
