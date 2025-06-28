@@ -11,7 +11,7 @@ export default function RoleScreen({ navigation }: Props) {
   const [role, setRole] = useState<string | null>(null);
 
   const handleJoin = async () => {
-    console.log("🔍 handleJoin triggered");
+    console.log("handleJoin triggered");
 
     const deviceId = await getPersistentDeviceId();
     console.log('📱 Device ID:', deviceId);
