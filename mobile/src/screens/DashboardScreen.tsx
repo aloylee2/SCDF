@@ -173,7 +173,7 @@ export default function DashboardScreen({ navigation }: any) {
         isVisible={showPostEmergencyOverlay}
         onClose={closePostEmergencyOverlay}
         onExpand={handleExpandOverlayContent} // Pass the modified handler
-        caseDetails={currentCaseDetails} // Pass the actual case details
+        //caseDetails={currentCaseDetails} // Pass the actual case details
       />
     </SafeAreaView>
   );

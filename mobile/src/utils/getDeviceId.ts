@@ -15,7 +15,7 @@ export async function getPersistentDeviceId(): Promise<string> {
     }
     return storedId;
   } catch (error) {
-    console.error('getPersistentDeviceId error:', error);
+    console.log('getPersistentDeviceId error:', error);
     throw error;
   }
 }
