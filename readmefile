@@ -81,3 +81,4 @@ include 2 emulator::
 
 
 
+npx react-native start --reset-cache
