@@ -79,6 +79,7 @@ Set up GUI for PostgreSQL:
 
 include 2 emulator::
 
-
+npm install --save react-native-get-random-values
 
 npx react-native start --reset-cache
+
