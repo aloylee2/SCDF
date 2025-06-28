@@ -120,6 +120,29 @@ export default function ViewMoreScreen() {
     }
   }, [nearbyAEDs]);
 
+  // NOTE: Need Async to be fixed to use
+  // import AsyncStorage from '@react-native-async-storage/async-storage';
+  // // Load last user location from AsyncStorage on mount
+  // useEffect(() => {
+  //   const loadLastPosition = async () => {
+  //     try {
+  //       const saved = await AsyncStorage.getItem('lastUserLocation');
+  //       if (saved) {
+  //         setUserLocation(JSON.parse(saved));
+  //       }
+  //     } catch (e) {
+  //       console.warn('Failed to load last user location:', e);
+  //     }
+  //   };
+  //   loadLastPosition();
+  // }, []);
+
+  // useEffect(() => {
+  //   if (userLocation) {
+  //     AsyncStorage.setItem('lastUserLocation', JSON.stringify(userLocation));
+  //   }
+  // }, [userLocation]);
+
   const requestLocationPermission = async () => {
     if (Platform.OS === 'android') {
       const granted = await PermissionsAndroid.request(
@@ -356,6 +379,29 @@ export default function ViewMoreScreen() {
     console.log('✅✅✅ AlertBanner import type:', typeof AlertBanner, AlertBanner);
   }
 
+  // 0.0001 is about 11 meters at the equator
+  // Simulate user movement along a path (e.g., the current routeCoords)
+  const simulateUserMovementAlongPath = (path: LatLng[], intervalMs = 1000) => {
+    if (!path || path.length === 0) return;
+    let i = 0;
+    setUserLocation(path[0]);
+    const interval = setInterval(/*async*/() => {
+      i++;
+      if (i >= path.length) {
+        clearInterval(interval);
+        // NOTE: Need async to be fixed to use
+        // // Save last position to AsyncStorage
+        // try {
+        //   await AsyncStorage.setItem('lastUserLocation', JSON.stringify(path[path.length - 1]));
+        // } catch (e) {
+        //   console.warn('Failed to save last user location:', e);
+        // }
+        // return;
+      }
+      setUserLocation(path[i]);
+    }, intervalMs);
+  };
+
   // Helper to compare coordinates with tolerance
   const isSameLocation = (a: LatLng, b: LatLng) =>
     Math.abs(a.latitude - b.latitude) < 1e-6 && Math.abs(a.longitude - b.longitude) < 1e-6;
@@ -402,10 +448,12 @@ export default function ViewMoreScreen() {
         ref={mapRef}
         style={styles.map}
         initialRegion={{
-          latitude: 1.3521,
-          longitude: 103.8198,
-          latitudeDelta: 0.1,
-          longitudeDelta: 0.1,
+          // latitude: 1.3521,
+          // longitude: 103.8198,
+          latitude: patientLocation.latitude,
+          longitude: patientLocation.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
         }}
       >
         {/* Show message if loading or error, else show pins */}
@@ -558,7 +606,14 @@ export default function ViewMoreScreen() {
       >
         <Text style={styles.buttonText}>Show Alert Banner</Text>
       </TouchableOpacity>
-      
+
+      <TouchableOpacity
+        style={[styles.viewMoreButton, { bottom: 340, backgroundColor: 'teal' }]}
+        onPress={() => simulateUserMovementAlongPath(routeCoords)}
+      >
+        <Text style={styles.buttonText}>Simulate User Along Route</Text>
+      </TouchableOpacity>
+
       {showAlertBanner && (
         <View style={styles.container}>
         <AlertBanner
