@@ -30,6 +30,22 @@ step 4: cd backend
 		python app.py
 
 ====================================================================================
+IMPT⭐⭐⭐ NOTE from Kaibao: (Rmb to remove when deloying for production)
+For instant backend refresh during development (ctrl + s)
+
+Added: 
+(volumes: - .:/app) in /backend/docker-compose.yml
+(ENV FLASK_DEBUG=1) in /backend/Dockerfile
+
+To check debugger:
+/backend
+CMD for backend log: docker-compose logs -f backend
+
+To check debugger from frontend (Only works when running 1 emulator):
+/mobile
+CMD for front-end debug: npx react-native log-android
+
+====================================================================================
 (backend postgresql)
 
 step 1: psql -h localhost -p 5432 -U scdf_username -d scdf_db

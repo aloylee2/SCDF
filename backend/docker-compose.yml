@@ -2,6 +2,9 @@ version: '3.8'
 services:
   backend:
     build: .
+    # Added Volume .:app for live code updates for development - Kaibao
+    volumes:
+      - .:/app
     ports:
       - "5000:5000"
     environment:

@@ -17,6 +17,7 @@ import MapView, {
   Polyline,
 } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AEDLocation {
   latitude: number;
@@ -44,7 +45,7 @@ export default function ViewMoreScreen() {
   const nearestNearbyAEDMarkerRef = useRef<any>(null);
   const mapRef = useRef<MapView>(null);
   const [showAlertBanner, setShowAlertBanner] = useState(false);
-  const [activeChip, setActiveChip] = useState<'walk' | 'car' | 'bike'>('walk');
+  const [activeChip, setActiveChip] = useState<'walk' | 'bicycle' | 'car'>('walk');
 
   //Hardcoded patient location
   const patientLocation: LatLng = {
@@ -55,6 +56,7 @@ export default function ViewMoreScreen() {
   useEffect(() => {
     setLoading(true);
     setFetchError(null);
+    
     fetch('http://10.0.2.2:5000/aed-locations', {
     // POST Method
     method: 'POST',
@@ -349,12 +351,56 @@ export default function ViewMoreScreen() {
   }
   };
 
+  // Load last user location from AsyncStorage on mount
+  useEffect(() => {
+    const loadLastPosition = async () => {
+      try {
+        const saved = await AsyncStorage.getItem('lastUserLocation');
+        if (saved) {
+          setUserLocation(JSON.parse(saved));
+        }
+      } catch (e) {
+        console.warn('Failed to load last user location:', e);
+      }
+    };
+    loadLastPosition();
+  }, []);
+
+  useEffect(() => {
+    if (userLocation) {
+      AsyncStorage.setItem('lastUserLocation', JSON.stringify(userLocation));
+    }
+  }, [userLocation]);
+
   // Check if AlertBanner is defined and log its type
   if (typeof AlertBanner === 'undefined') {
     console.warn('❌❌❌ AlertBanner is undefined! Check your import/export.');
   } else {
     console.log('✅✅✅ AlertBanner import type:', typeof AlertBanner, AlertBanner);
   }
+  
+  // 0.0001 is about 11 meters at the equator
+  // Simulate user movement along a path (e.g., the current routeCoords)
+  const simulateUserMovementAlongPath = (path: LatLng[], intervalMs = 1000) => {
+    if (!path || path.length === 0) return;
+    let i = 0;
+    setUserLocation(path[0]);
+    const interval = setInterval(async() => {
+      i++;
+      if (i >= path.length) {
+        clearInterval(interval);
+        // NOTE: Need async to be fixed to use
+        // Save last position to AsyncStorage
+        try {
+          await AsyncStorage.setItem('lastUserLocation', JSON.stringify(path[path.length - 1]));
+        } catch (e) {
+          console.warn('Failed to save last user location:', e);
+        }
+        return;
+      }
+      setUserLocation(path[i]);
+    }, intervalMs);
+  };
 
   // Helper to compare coordinates with tolerance
   const isSameLocation = (a: LatLng, b: LatLng) =>
@@ -382,18 +428,18 @@ export default function ViewMoreScreen() {
         <Text style={[styles.chipText, activeChip === 'walk' && {color: 'white'}]}>4 min</Text>
       </TouchableOpacity>
       <TouchableOpacity
+        style={[styles.chip, activeChip === 'bicycle' && styles.chipActive]}
+        onPress={() => setActiveChip('bicycle')}
+      >
+        <Text style={[styles.chipIcon, activeChip === 'bicycle' && {color: 'white'}]}>🚴‍♂️</Text>
+        <Text style={[styles.chipText, activeChip === 'bicycle' && {color: 'white'}]}>2 min</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
         style={[styles.chip, activeChip === 'car' && styles.chipActive]}
         onPress={() => setActiveChip('car')}
       >
         <Text style={[styles.chipIcon, activeChip === 'car' && {color: 'white'}]}>🚗</Text>
         <Text style={[styles.chipText, activeChip === 'car' && {color: 'white'}]}>2 min</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.chip, activeChip === 'bike' && styles.chipActive]}
-        onPress={() => setActiveChip('bike')}
-      >
-        <Text style={[styles.chipIcon, activeChip === 'bike' && {color: 'white'}]}>🏍️</Text>
-        <Text style={[styles.chipText, activeChip === 'bike' && {color: 'white'}]}>2 min</Text>
       </TouchableOpacity>
     </View>
 
@@ -402,10 +448,12 @@ export default function ViewMoreScreen() {
         ref={mapRef}
         style={styles.map}
         initialRegion={{
-          latitude: 1.3521,
-          longitude: 103.8198,
-          latitudeDelta: 0.1,
-          longitudeDelta: 0.1,
+          // latitude: 1.3521,
+          // longitude: 103.8198,
+          latitude: patientLocation.latitude,
+          longitude: patientLocation.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
         }}
       >
         {/* Show message if loading or error, else show pins */}
@@ -557,6 +605,13 @@ export default function ViewMoreScreen() {
         onPress={() => setShowAlertBanner(true)}
       >
         <Text style={styles.buttonText}>Show Alert Banner</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.viewMoreButton, { bottom: 340, backgroundColor: 'teal' }]}
+        onPress={() => simulateUserMovementAlongPath(routeCoords)}
+      >
+        <Text style={styles.buttonText}>Simulate User Along Route</Text>
       </TouchableOpacity>
       
       {showAlertBanner && (
