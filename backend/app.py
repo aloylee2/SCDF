@@ -165,6 +165,9 @@ class Incident:
     def get_longitude(self):
         return self.__longitude
     
+    def get_location(self):
+        return (self.__latitude, self.__longitude)
+    
     def get_datetime(self):
         return self.__datetime
 
@@ -219,22 +222,63 @@ class Incident:
     
 
 # ==================================================================
-# R Role Engine Class
+# Role Engine Class
 # ==================================================================
+class Objectives:
+    def __init__(self):
+        self.__currentIndex = 0
+        self.__listOfObjectives = {"cpr_hero": ["chobj1", "chobj2", "chobj3"], 
+                                   "aed_buddy": ["abobj1", "abobj2", "abobj3"],
+                                   "assistant": ["aobj1", "aobj2", "aobj3"]}
+        self.__tag = None       # this will take the key of the roles to help us track the key of the listOfObjectives e.g. cpr_hero, aed_buddy, etc 
+        
+    # ========== Getter ==========
+    def get_currentObjectives(self):
+        if self.__tag and self.__tag in self.__listOfObjectives:
+            return self.__listOfObjectives[self.__tag][self.__currentIndex]
+        return None
+    
+    def get_listOfObjectives(self):
+        return self.__listOfObjectives
+    
+    def get_tag(self):
+        return self.__tag
+    
+    # ========== Setter ==========
+    def set_tag(self, tag):
+        self.__tag = tag
+        self.__currentIndex = 0
+        
+    def next_objectives(self):
+        if self.__tag and self.__tag in self.__listOfObjectives:
+            if self.__currentIndex + 1 < len(self.__listOfObjectives[self.__tag]):
+                self.__currentIndex += 1
+                return self.get_currentObjectives()
+        return None
+        
+
+    
+
 class Responder:
     def __init__(self):
         self.__emulatorId = None
+        self.__screenId = None
         self.__role = None
         self.__latitude = None
         self.__longtitude = None
         self.__disabilities = []
-        self.__isInNoChangeRadius = 0 # Identify if user entered role no-change radius 
+        self.__currentObject = "Get to scene"
+        self.__isInNoChangeRadius = False # Identify if user entered role no-change radius 
         self.__roleChangeCounter = 0 # if above two swaps we mark CFR not able to swap roles
-        self.__case_acceptance_time = datetime.now() # Time when the responder attended the incident
+        self.__case_acceptance_time = None # Time when the responder attended the incident
+        self.__objectivesClass = Objectives()
         
     # ========= Getter =========
     def get_emulatorId(self):
         return self.__emulatorId
+    
+    def get_screenId(self):
+        return self.__screenId
     
     def get_role(self):
         return self.__role
@@ -260,7 +304,19 @@ class Responder:
     def get_case_acceptance_time(self):
         return self.__case_acceptance_time
     
+    def get_current_objective(self):
+        return self.__currentObject
+    
+    def get_objectivesClass(self):
+        return self.__objectivesClass
+    
     # ========= Setter =========
+    def set_emulatorId(self, emulatorId):
+        self.__emulatorId = emulatorId
+    
+    def set_screenId(self, screenId):
+        self.__screenId = screenId
+    
     def set_role(self, newRole):
         self.__role = newRole
     
@@ -268,26 +324,20 @@ class Responder:
         self.__latitude = lat
         self.__longtitude = long
         
+    def set_current_objective(self, objective):
+        self.__currentObject = objective
+        
     def update_disabilities(self, newDisabilities):
-        # there is confirm a more efficent way to do this checks but i speed coding rn.
         self.__disabilities = newDisabilities
     
     def set_isInNoChangeArea(self, radiusStatus):
-        if radiusStatus:
-            self.__isInNoChangeRadius = 1
-            return True
-        return False
+        self.__isInNoChangeRadius = radiusStatus
+    
+    def set_case_acceptance_time(self):
+        self.__case_acceptance_time = datetime.now()
     
     # ========= Class Functions =========
-    def is_role_no_change(self, incident_location):
-        # return True if this responder stays in the same role
-        distance = geodesic(self.get_location, incident_location)
-        if 0 < distance <= 50:
-            self.set_isInNoChangeArea(True)
-            return True
-        else:
-            self.set_isInNoChangeArea(False)
-            return False
+    pass
 
 class RoleAllocationEngine:
     # Role engine rough idea
@@ -296,7 +346,7 @@ class RoleAllocationEngine:
     def __init__(self):
         self.__cfrCount = 0
         self.__AEDCollectedBy = []
-        self.__roles = ["CPR_Hero", "AED_Buddy", "Assistant"]
+        self.__roles = ["cpr_hero", "aed_buddy", "assistant"]
         self.__roles_taken = []
         self.__listOfResponders = []
         self.lock = threading.Lock()
@@ -333,10 +383,18 @@ class RoleAllocationEngine:
         # return True if this responder stays in the same role
         pass
         
-    def is_within_distance(self, responder, incident, threshold_m):
+    def is_within_distance(self, responder, incident, threshold_m) -> bool:
         # this will work hand in hand with assign_roles_to_responder
-        pass
-        
+        if geodesic(responder.get_location(), incident.get_location()).meters <= threshold_m:
+            return True
+        return False
+    
+    # TODO: I put this here i later check again
+    def check_and_assign_role(self, responder, incident, role):
+        if self.is_within_distance(responder, incident, 50):  # 50 meters as example
+            responder.set_role(role)
+            # You can also update any state or notify the frontend here
+    
     def has_time_elapsed(self, responder, incident, max_minutes) -> bool:
         # i think if we using the python function we dont need use this function
         pass
@@ -357,9 +415,32 @@ class RoleAllocationEngine:
     def disabilityChecker(self, responder, disability):
         # backend/services/role_service.py
 
+        non_CPR_AED_roles = ["hearing_impairment", "mobility_impairment", "limb_differences_waist_down", "limb_differences_above_waist"]
+
+        # 0 -> Capable of CPR & AED
+        # 1 -> Not capable of CPR & AED
+        if not disability:
+            return 0 
+        else:
+            if disability in non_CPR_AED_roles:
+                return 1
+            return 0
+    
         # Keys should match whatever string you use for roles in your app.
         ROLE_ALLOWED_DISABILITIES = {
             "CPR_Heroes_1/2": {
+                "hearing_impairment",
+                "speech_impairment",
+            },
+            "AED_Buddy": {
+                "hearing_impairment",
+                "speech_impairment",
+            },
+            "AED_Buddy": {
+                "hearing_impairment",
+                "speech_impairment",
+            },
+            "AED_Buddy": {
                 "hearing_impairment",
                 "speech_impairment",
             },
@@ -381,46 +462,184 @@ class RoleAllocationEngine:
                 "limb_differences_above_waist",
             },
         }
-
         pass
-
-        #Sean: i think this is correct hahahah
+        
+    def isAEDCollectedStateChecker(self, AED_State) -> bool:
+    # this check is for the delegation of the AED role (e.g. if we still need to give out AED buddy role)
+    # also if we want to make the second CFR collect the AED (if uncollected) or go to the scene if the AED is already collected
+        pass
+        
     def isMaxResponderCount(self) -> bool:
         # a check to make sure that there are less than 6 responders
         return self.__cfrCount < 6
     
     # TODO: Come back and amend the logic if the time variable is wrong
-    def compare_acceptance_times(self, responder):
+
+
+    def compare_acceptance_times(self):
         with self.lock:
-            first_responder = self.get_last_responder()
-            if first_responder and first_responder != responder:
-                time_diff = abs((responder.get_case_acceptance_time() - first_responder.get_case_acceptance_time()).total_seconds()) # this part
-                threshold = 0.5
+            responders = self.get_listOfResponders()
+            # Sort responders by acceptance time
+            sorted_responders = sorted(
+                responders, 
+                key=lambda r: r.get_case_acceptance_time()
+            )
+            # Example: print time differences and group those within threshold
+            threshold = 5  # seconds
+            grouped = []
+            group = [sorted_responders[0]]
+            for i in range(1, len(sorted_responders)):
+                prev = sorted_responders[i-1]
+                curr = sorted_responders[i]
+                time_diff = abs(
+                    (curr.get_case_acceptance_time() - prev.get_case_acceptance_time()).total_seconds()
+                )
                 if time_diff < threshold:
-                    print("Responders accepted at same time!")
-                else: 
-                    print("Responder accepted at different times!")
-            pass
-                    
-    
-    def isAEDCollectedStateChecker(self, AED_State) -> bool:
-        # this check is for the delegation of the AED role (e.g. if we still need to give out AED buddy role)
-        # also if we want to make the second CFR collect the AED (if uncollected) or go to the scene if the AED is already collected
+                    group.append(curr)
+                else:
+                    grouped.append(group)
+                    group = [curr]
+            grouped.append(group)  # add last group
+
+            # Now, grouped contains lists of responders who accepted at (almost) the same time
+            for idx, group in enumerate(grouped):
+                print(f"Group {idx+1}: {[r.get_emulatorId() for r in group]}")
+
+            return grouped  # or use this grouping for your role allocation logic
+            # btw this returns like something like this
+            # [ResponderA, ResponderB],   # Group 1: accepted at almost the same time
+            # [ResponderC, ResponderD],   # Group 2: accepted at almost the same time
+            # [ResponderE]                # Group 3: accepted alone
+
+    # TODO: Kaibao
+    def compare_acceptance_times2(self):
+        # user comes in
+        # If anyone accept before this user within 0.5s
+        # Yes: user added to temp[]
+        # No: user added to new temp[]
+        # every 0.1s loop to wait for new thread
+        # If new thread comes in, repeat loop
+        # Once loop complete, return temp[] # temp[] with 1 means diff time, temp[] with >1 means within 0.5s
         pass
+    
         
     # Main function
-    def role_engine(self, responder, incident,):
+    def role_engine(self, responder_id, incident):
         # Case broadcast close
         if self.isMaxResponderCount() and True: # Placeholder to check if broadcast system is still up 
-            return # TODO: Placeholder: Case broadcast close
+            return # TODO: Placeholder: Close broadcast
         
-        responders = self.get_listOfResponders()
-        if self.get_cfrCount() > 0:
-            if (responder.get_case_acceptance_time() - responders[self.get_cfrCount()-1].get_case_acceptance_time()):
-                pass
+        # TODO: Kaibao: check if responder response time is 0.5sec after call, then no need to comapre acceptance time
+        grouped_responders = self.compare_acceptance_times()
+        # grouped_responders = self.compare_acceptance_times2()
         
+        if self.get_cfrCount() > 0: #TODO:  max two disability
+            for group in grouped_responders:
+                # Acceptance time check (Same/Diff.)
+                if len(group) > 1: # 2 or more CFR accepted same time
+                    print(f"Group with multiple responders: {[r.get_emulatorId() for r in group]}") # (Same time responders)Handle logic for groups with more than one responder
+                    for currResponder in group: # Now slowly send each responder in the isolated group further down the role engine
+                        pass
+                else: # CFR accepting diff. time
+                    print(f"Single responder in group: {group[0].get_emulatorId()}") # (Individual different time responders) Handle logic for single responders
+                    for currResponder in group: # Now slowly send each responder in the isolated group further down the role engine
+                        if roleEngine.disabilityChecker(group[0].get_disabilities()) == 0: # Can do CPR & AED
+                            if len(self.get_roles_taken()) == 0: # First Responder (No roles taken)
+                                
+                                # this assigns the user a tag but still not the roles (rmb that the roles are given when he/she is in the radius)
+                                currResponder.get_objectivesClass().set_tag(self.__roles[0])
+                                # set the current objective for UI
+                                currResponder.set_current_objectives(currResponder.get_objectivesClass().get_currentObjectives())
+                                
+                                # TODO: THIS IS ALREADY THE END OF THE FIRST RESPONDER FLOW DO 
+                                # MAKE SURE THAT WE ALSO ADD A CHECKER FOR RADIUS AND THEN ADD THE ROLE ALLOCATION LOGIC
+                                # ALSO REMEMBER TO UPDATE THE STATE OF THE AED BUT I THINK THAT IS FRONT ENDD SO NO ISSUE HERE
+                            
+                        else: # Cannot do CPR & AED
+                            # ROUTE TO SCENE w/ ROLE RELATED OBJECTIVE
+                            pass
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    
+                    # # Check user disabilities
+                    # match roleEngine.disabilityChecker(group[0].get_disabilities()):
+                    #     case 1: # Can do CPR & AED
+                    #         # Check if AED collected
+                    #         if len(roleEngine.get_isAEDCollectedBy()) > 0: # AED Collected
+                    #             # Check how many Responder
+                    #             match self.get_cfrCount():
+                    #                 case 1:
+                    #                     # TODO: Kaibao can be checked outside, if have role, continue task, no role then normal checks
+                    #                     # Check if user has Role
+                    #                     if group[0].get_role() == None:
+                    #                         # Check if user within No-Change radius
+                    #                         if not roleEngine.is_within_distance(group[0], incident, 50): 
+                    #                             # Route to Scene w/ AED
+                    #                             pass
+                    #                         else:
+                    #                             # Assign Role: CPR HERO w/ AED
+                    #                             pass
+                    #                     else:
+                    #                         # Already Assigned Role, continue task
+                    #                         pass
+                    #                 case 2:
+                    #                     # Check if user has Role
+                    #                     if group[0].get_role() == None:
+                    #                         # Check if user within No-Change radius
+                    #                         if not roleEngine.is_within_distance(group[0], incident, 50): 
+                    #                             # Route to Scene
+                    #                             pass
+                    #                         else:
+                    #                             # Check if other user has role
+                    #                             if len(roleEngine.get_roles_taken()) == 0:
+                    #                                 # Assign Role: CPR HERO
+                    #                                 pass
+                    #                             else:
+                    #                                 # Assign Role: AED Buddy
+                    #                                 pass
+                    #                     else:
+                    #                         # Already Assigned Role, continue task
+                    #                         pass
+
+                    #         else: # No AED Collected
+                    #             # Check how many Responder
+                    #             match self.get_cfrCount():
+                    #                 case 1:
+                    #                     # Route to Scene, get AED along the way
+                    #                     pass
+                    #                 case 2:
+                    #                     pass
+                    #     case 0: # Cannot do CPR & AED
+                    #         # Check if user's No-Change radius status
+                    #         match group[0].get_isInNoChangeRadius():
+                    #             case True:
+                    #                 # User should have role
+                    #                 pass
+                    #             case False:
+                    #                 # Check if user within No-Change radius
+                    #                 if not roleEngine.is_within_distance(group[0], incident, 50):
+                    #                     # Direct them to go Scene
+                    #                     return 0
+                    #                 else:
+                    #                     # User just enter radius
+                    #                     group[0].set_isInNoChangeArea() = True
+                    #                     # Assign Role: Assistance
+# 0 -> Direct to Scene
+# 
+                                        
 
 
 # ==================================================================
@@ -439,27 +658,70 @@ class RoleAllocationEngine:
 incidents.append(Incident(1.3513, 103.8443))
 roleEngine = RoleAllocationEngine()
 
-assigned_roles = {} # hold the roles assigned to users
+joined_users = {} # hold the users/emulators that joined
+# E.g.
+# device_id : Responder
 
-@app.route('/assign-role', methods=['POST'])
-def assign_role():
+# TODO: Save user disabilities from disability page
+@app.route('/join-session', methods=['POST'])
+def join_session():
     data = request.json
     device_id = data.get('device_id')
     print(f"Received device_id: {device_id}")
-    print("Current assigned roles:", assigned_roles)
+    print("Current assigned screen:", joined_users)
 
-    if device_id in assigned_roles:
-        role = assigned_roles[device_id]
-    elif "A" not in assigned_roles.values():
-        role = "A"
-        assigned_roles[device_id] = role
-    elif "B" not in assigned_roles.values():
-        role = "B"
-        assigned_roles[device_id] = role
+    if device_id in joined_users:
+        screen = joined_users.get(device_id).get_screenId()
+    elif "A" not in joined_users.values():
+        screen = "A"
+        responder = Responder()
+        responder.set_emulatorId(device_id) # responder object need to add emulator_id
+        responder.set_screenId(screen) # responder object need to add screen data
+        # Sean: do you also want these below
+        responder_lat = data.get('latitude')
+        responder_lon = data.get('longitude')
+        responder.set_location((responder_lat, responder_lon))
+        joined_users[device_id] = responder # responder object
+        # responderA.update_disabilities(tsreathsirahthraothoaht) # idk how you pulling disabilities yet
+    elif "B" not in joined_users.values():
+        screen = "B"
+        responder = Responder()
+        responder.set_emulatorId(device_id) # responder object need to add emulator_id
+        responder.set_screenId(screen) # responder object need to add screen data
+        # Sean: do you also want these below
+        responder_lat = data.get('latitude')
+        responder_lon = data.get('longitude')
+        responder.set_location((responder_lat, responder_lon))
+        joined_users[device_id] = responder # responder object
+        # responderA.update_disabilities(tsreathsirahthraothoaht) # idk how you pulling disabilities yet
     else:
-        role = "None"
+        screen = "None"
     
     roleEngine.add_responder(device_id)
 
-    print(f"Assigned role for {device_id}: {role}")
-    return jsonify({"role": role, "assigned_at": datetime.utcnow().isoformat()})
+    print(f"Assigned Screen for {device_id}: {screen}")
+    return jsonify({"Assigned Screen": screen, "given at": datetime.utcnow().isoformat()})
+
+@app.route('/accept-case', methods=['GET'])
+def accept_case():
+    data = request.json
+    device_id = data.get('device_id')
+
+    try:
+        roleEngine.role_engine(device_id, incidents[0])
+    except Exception as e:
+        print (f"Error: {e}")
+    
+    print(f"Responder {device_id} joined incident")
+    # return jsonify({"Assigned Screen": screen, "given at": datetime.utcnow().isoformat()})
+
+# Everytime user move, this will update backend for Role Engine to check
+@app.route('/next-step', methods=['GET'])
+def accept_case():
+    data = request.json
+    device_id = data.get('device_id')
+
+    try:
+        roleEngine.role_engine(device_id, incidents[0])
+    except Exception as e:
+        print (f"Error: {e}")

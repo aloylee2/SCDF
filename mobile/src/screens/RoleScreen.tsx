@@ -17,26 +17,26 @@ export default function RoleScreen({ navigation }: Props) {
     console.log('📱 Device ID:', deviceId);
 
     try {
-      const response = await axios.post('http://10.0.2.2:5000/assign-role', {
+      const response = await axios.post('http://10.0.2.2:5000/join-session', {
         device_id: deviceId,
       });
 
-      const assignedRole = response.data.role;
-      console.log('🎯 Assigned role:', assignedRole);
-      setRole(assignedRole);
+      const assignedScreen = response.data.role;
+      console.log('🎯 Assigned screen:', assignedScreen);
+      setRole(assignedScreen);
 
-      if (assignedRole === 'A') {
+      if (assignedScreen === 'A') {
         console.log("🔁 Navigating to ScreenA");
         navigation.replace('ScreenA');
-      } else if (assignedRole === 'B') {
+      } else if (assignedScreen === 'B') {
         console.log("🔁 Navigating to ScreenB");
         navigation.replace('ScreenB');
       } else {
-        Alert.alert('Info', 'Roles are full or waiting for another user.');
+        Alert.alert('Info', 'Responders are full or waiting for another user.');
       }
     } catch (error) {
-      console.error('🔥 Error assigning role:', error);
-      Alert.alert('Error', 'Failed to assign role. Please try again.');
+      console.error('🔥 Error assigning screen:', error);
+      Alert.alert('Error', 'Failed to assign screen. Please try again.');
     }
   };
 
