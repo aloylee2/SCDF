@@ -347,14 +347,18 @@ class RoleAllocationEngine:
         self.__cfrCount = 0
         self.__AEDCollectedBy = []
         self.__roles = ["cpr_hero", "aed_buddy", "assistant"]
-        self.__roles_taken = []
+        self.__roles_taken = {} # e.g. key = roles | value = device_id 
         self.__listOfResponders = []
         self.lock = threading.Lock()
+        self.__AEDTag = None #Keep track of main person collecting AED
         
     # ========Getters========
     def get_cfrCount(self):
         return self.__cfrCount
     
+    def get_AEDTag(self):
+        return self.__AEDTag
+
     def get_isAEDCollectedBy(self):
         return self.__AEDCollectedBy
     
@@ -378,10 +382,20 @@ class RoleAllocationEngine:
         self.__listOfResponders.append(responderId)
         self.__cfrCount += 1
     
+    def set_roles_taken(self, responderId, role):
+        try:
+            self.__roles_taken[role] = responderId
+            return True
+        except Exception as e:
+            print(f"Unable to assign role: {role} to user: {responderId}")
+            return False
+
+    def set_AEDTag(self, responder_id):
+        self.__AEDTag = responder_id
+    
     # ========Class Functions========
-    def is_role_no_change(self, responders, incident, roles) -> bool:
-        # return True if this responder stays in the same role
-        pass
+    def is_role_no_change(self, responder) -> bool:
+        return responder.get_isInNoChangeRadius()
         
     def is_within_distance(self, responder, incident, threshold_m) -> bool:
         # this will work hand in hand with assign_roles_to_responder
@@ -522,7 +536,6 @@ class RoleAllocationEngine:
         # Once loop complete, return temp[] # temp[] with 1 means diff time, temp[] with >1 means within 0.5s
         pass
     
-        
     # Main function
     def role_engine(self, responder_id, incident):
         # Case broadcast close
@@ -543,21 +556,72 @@ class RoleAllocationEngine:
                 else: # CFR accepting diff. time
                     print(f"Single responder in group: {group[0].get_emulatorId()}") # (Individual different time responders) Handle logic for single responders
                     for currResponder in group: # Now slowly send each responder in the isolated group further down the role engine
-                        if roleEngine.disabilityChecker(group[0].get_disabilities()) == 0: # Can do CPR & AED
-                            if len(self.get_roles_taken()) == 0: # First Responder (No roles taken)
-                                
-                                # this assigns the user a tag but still not the roles (rmb that the roles are given when he/she is in the radius)
-                                currResponder.get_objectivesClass().set_tag(self.__roles[0])
-                                # set the current objective for UI
-                                currResponder.set_current_objectives(currResponder.get_objectivesClass().get_currentObjectives())
-                                
-                                # TODO: THIS IS ALREADY THE END OF THE FIRST RESPONDER FLOW DO 
-                                # MAKE SURE THAT WE ALSO ADD A CHECKER FOR RADIUS AND THEN ADD THE ROLE ALLOCATION LOGIC
-                                # ALSO REMEMBER TO UPDATE THE STATE OF THE AED BUT I THINK THAT IS FRONT ENDD SO NO ISSUE HERE
-                            
+                        ### Check user disability
+                        if self.disabilityChecker(currResponder, currResponder.get_disabilities()) == 0: # Can do CPR & AED
+                            ### Check if user entered No-Change radius before
+                            if self.is_role_no_change(currResponder) == True:
+                                # CONTINUE ROLE/TASK OR IF WE WANT TO DO TASK CHECK/UPDATE
+                                pass
+                            else:
+                                # User no role & never entered radius
+                                ### Check if user position is in/out of No-Change Radius to determine next step
+                                if self.is_within_distance(currResponder, incident, 50): 
+                                    # User just entered No-Change Radius
+                                    ### Check what role has been taken
+                                    if self.get_roles()[0] not in self.get_roles_taken(): ######################## First: Check if CPR HERO open
+                                        # ASSIGN RESPONDER WITH CPR HERO
+                                        self.set_roles_taken(currResponder, self.get_roles()[0]) 
+                                        currResponder.set_isInNoChangeArea(True)
+                                    elif self.get_roles()[1] not in self.get_roles_taken(): ###################### Second: Check if AED BUDDY open
+                                        ### Second part 1: Check if user has Collected AED
+                                        taggedAEDResponder = self.get_AEDTag()
+                                        if currResponder.get_emulatorId() in self.get_isAEDCollectedBy(): 
+                                            # ASSIGN RESPONDER WITH AED BUDDY
+                                            self.set_roles_taken(currResponder, self.get_roles()[1])
+                                            currResponder.set_isInNoChangeArea(True)
+                                        ### Second part 2.1: If nobody is collecting AED
+                                        elif taggedAEDResponder is None:
+                                            # TAG RESPONDER TO COLLECT AED
+                                            self.set_AEDTag(currResponder.get_emulatorId())
+                                        ### Second part 2.2: If somebody is collecting AED
+                                        elif taggedAEDResponder is not None: 
+                                            ### Check if current user is Tagged Responder else compare who is closer to AED
+                                            if taggedAEDResponder == currResponder.get_emulatorId():
+                                                # CONTINUE GETTING AED
+                                                pass
+                                            else:
+                                                ### Check if current user is closer to AED by 100m
+                                                pass
+                                    else: ######################################################################### Third: ASSISTANCE
+                                        # Never check how many assistan are taken
+                                        # ASSIGN RESPONDER WITH ASSISTANCE
+                                        self.set_roles_taken(currResponder, self.get_roles()[3]) 
+                                        currResponder.set_isInNoChangeArea(True)
+                                else:
+                                    # User still outside No-Change Radius
+                                    ### Check if AED Collected
+                                    if len(self.get_isAEDCollectedBy()) > 0:
+                                        # AED Collected
+                                        # GO TO SCENE
+                                        pass
+                                    else:
+                                        # No AED Collected
+                                        ### Check how many CFRs are attending to case
+                                        CFR_count = self.get_cfrCount()
+                                        responder_list = self.get_listOfResponders()
+                                        match CFR_count:
+                                            case 1: # 1 CFR attending
+                                                # GO SCENE + GET AED ALONG THE WAY
+                                                pass
+                                            case 2: # 2 CFR attending
+                                                responder: Responder = Responder()
+                                                for responder in responder_list:
+                                                    if responder.get_emulatorId():
+                                                        pass
+                                            case 3,4,5: # 3-5 CFR attending
+                                                pass
                         else: # Cannot do CPR & AED
-                            # ROUTE TO SCENE w/ ROLE RELATED OBJECTIVE
-                            pass
+                            pass    
 
 
 
@@ -567,10 +631,20 @@ class RoleAllocationEngine:
 
 
 
-
-
-
-
+                        #     if len(self.get_roles_taken()) == 0: # First Responder (No roles taken)
+                                
+                        #         # this assigns the user a tag but still not the roles (rmb that the roles are given when he/she is in the radius)
+                        #         currResponder.get_objectivesClass().set_tag(self.__roles[0])
+                        #         # set the current objective for UI
+                        #         currResponder.set_current_objectives(currResponder.get_objectivesClass().get_currentObjectives())
+                                
+                        #         # TODO: THIS IS ALREADY THE END OF THE FIRST RESPONDER FLOW DO 
+                        #         # MAKE SURE THAT WE ALSO ADD A CHECKER FOR RADIUS AND THEN ADD THE ROLE ALLOCATION LOGIC
+                        #         # ALSO REMEMBER TO UPDATE THE STATE OF THE AED BUT I THINK THAT IS FRONT ENDD SO NO ISSUE HERE
+                            
+                        # else: # Cannot do CPR & AED
+                        #     # ROUTE TO SCENE w/ ROLE RELATED OBJECTIVE
+                        #     pass
 
 
                     
@@ -658,6 +732,7 @@ class RoleAllocationEngine:
 incidents.append(Incident(1.3513, 103.8443))
 roleEngine = RoleAllocationEngine()
 
+screen_id_used = [] # hold the screen that has been assigned
 joined_users = {} # hold the users/emulators that joined
 # E.g.
 # device_id : Responder
@@ -671,8 +746,13 @@ def join_session():
     print("Current assigned screen:", joined_users)
 
     if device_id in joined_users:
-        screen = joined_users.get(device_id).get_screenId()
-    elif "A" not in joined_users.values():
+        device = joined_users.get(device_id)
+        if device is None:
+            print("No device found")
+            pass
+        else:
+            device.get_screenId()
+    elif "A" not in screen_id_used:
         screen = "A"
         responder = Responder()
         responder.set_emulatorId(device_id) # responder object need to add emulator_id
@@ -680,10 +760,11 @@ def join_session():
         # Sean: do you also want these below
         responder_lat = data.get('latitude')
         responder_lon = data.get('longitude')
-        responder.set_location((responder_lat, responder_lon))
+        responder.set_location(responder_lat, responder_lon)
         joined_users[device_id] = responder # responder object
+        screen_id_used.append("A")
         # responderA.update_disabilities(tsreathsirahthraothoaht) # idk how you pulling disabilities yet
-    elif "B" not in joined_users.values():
+    elif "B" not in screen_id_used:
         screen = "B"
         responder = Responder()
         responder.set_emulatorId(device_id) # responder object need to add emulator_id
@@ -691,8 +772,9 @@ def join_session():
         # Sean: do you also want these below
         responder_lat = data.get('latitude')
         responder_lon = data.get('longitude')
-        responder.set_location((responder_lat, responder_lon))
+        responder.set_location(responder_lat, responder_lon)
         joined_users[device_id] = responder # responder object
+        screen_id_used.append("B")
         # responderA.update_disabilities(tsreathsirahthraothoaht) # idk how you pulling disabilities yet
     else:
         screen = "None"
@@ -717,7 +799,7 @@ def accept_case():
 
 # Everytime user move, this will update backend for Role Engine to check
 @app.route('/next-step', methods=['GET'])
-def accept_case():
+def next_step():
     data = request.json
     device_id = data.get('device_id')
 
