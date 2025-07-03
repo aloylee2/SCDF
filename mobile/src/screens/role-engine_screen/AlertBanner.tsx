@@ -46,14 +46,14 @@ export const AlertBanner = ({ visible, onAccept, onDecline }: any) => {
     {/* Bottom Popup */}
       <View style={styles.content}>
         {/* Top Banner */}
-        <View style={styles.bannerRow}>
+        {/* <View style={styles.bannerRow}>
           <Text style={styles.bannerText}>We need CFRs!</Text>
           <Image
             source={require('../../assets/role_engine/cpr_hero.png')} // Replace with your image path
             style={styles.bannerImage}
             resizeMode="contain"
           />
-        </View>
+        </View> */}
 
         {/* Incident Card */}
         <View style={styles.card}>

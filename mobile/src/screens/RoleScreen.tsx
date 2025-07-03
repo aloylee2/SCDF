@@ -18,10 +18,10 @@ export default function RoleScreen({ navigation }: Props) {
 
     try {
       const response = await axios.post('http://10.0.2.2:5000/join-session', {
-        device_id: deviceId,
+        device_id: deviceId, 
       });
 
-      const assignedScreen = response.data.role;
+      const assignedScreen = response.data.screen;
       console.log('🎯 Assigned screen:', assignedScreen);
       setRole(assignedScreen);
 

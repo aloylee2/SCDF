@@ -526,7 +526,7 @@ export default function ViewMoreScreen() {
             );
           })
         )}
-
+        
         {userLocation && (
           <Marker
             coordinate={userLocation}

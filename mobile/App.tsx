@@ -11,7 +11,7 @@ import SecondScreen from './src/screens/SecondScreen';
 // Import DashboardScreen from its new file
 import DashboardScreen from './src/screens/DashboardScreen';
 import PostEmergencyDetailScreen from './src/screens/PostEmergencyDetailScreen';
-import ViewMoreScreen from './src/screens/ViewMoreScreen';
+// import ViewMoreScreen from './src/screens/ViewMoreScreen';
 import LearnYourRolesScreen from './src/screens/LearnYourRolesScreen'
 import CPRHeroTrainingScreen from './src/screens/CPRHeroTrainingScreen'; // Your CPR Hero training screen
 import AEDBuddyTrainingScreen from './src/screens/AEDBuddyTrainingScreen'; // New training screen
@@ -117,7 +117,7 @@ export default function App() {
           <Stack.Screen name="Second" component={SecondScreen} />
           <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ headerShown: false }} />
           <Stack.Screen name="PostEmergencyDetail" component={PostEmergencyDetailScreen} />
-          <Stack.Screen name="ViewMore" component={ViewMoreScreen} />
+          {/* <Stack.Screen name="ViewMore" component={ViewMoreScreen} /> */}
           <Stack.Screen name="LearnYourRoles" component={LearnYourRolesScreen} options={{ headerShown: false }} />
           <Stack.Screen name="CPRHeroTraining" component={CPRHeroTrainingScreen} options={{ headerShown: false }} />
           <Stack.Screen name="AEDBuddyTraining" component={AEDBuddyTrainingScreen} options={{ headerShown: false }} />
