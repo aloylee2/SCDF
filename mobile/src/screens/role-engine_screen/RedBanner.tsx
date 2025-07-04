@@ -1,20 +1,21 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, ImageSourcePropType } from 'react-native';
 
 interface RedBannerProps {
   text: string;
+  bannerImg: ImageSourcePropType;
   visible?: boolean;
 }
 
-export const RedBanner: React.FC<RedBannerProps> = ({ text, visible = true }) => {
+export const RedBanner: React.FC<RedBannerProps> = ({ text, bannerImg, visible = true }) => {
   if (!visible) return null;
   return (
     <View style={styles.bannerRow}>
         <Text style={styles.bannerText}>{text}</Text>
         <Image
-        source={require('../../assets/role_engine/cpr_hero.png')} // Replace with your image path
-        style={styles.bannerImage}
-        resizeMode="contain"
+          source={bannerImg}
+          style={styles.bannerImage}
+          resizeMode="contain"
         />
     </View>
   );
@@ -44,8 +45,10 @@ const styles = StyleSheet.create({
   bannerText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 32,
+    fontSize: 28,
     flex: 1,
+    paddingRight: 100,
+    textAlign: 'center',
   },
   bannerImage: {
     width: 120,

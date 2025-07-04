@@ -395,6 +395,9 @@ class RoleAllocationEngine:
 
     def set_AEDTag(self, responder_id):
         self.__AEDTag = responder_id
+
+    def set_isAEDCollectedBy(self, responder_id):
+        self.__AEDCollectedBy.append(responder_id)
     
     # ========Class Functions========
     def is_role_no_change(self, responder) -> bool:
@@ -402,6 +405,7 @@ class RoleAllocationEngine:
         
     def is_within_distance(self, responder, incident, threshold_m) -> bool:
         # this will work hand in hand with assign_roles_to_responder
+        print(f"responder location to case location: {geodesic(responder.get_location(), incident.get_location()).meters}")
         if geodesic(responder.get_location(), incident.get_location()).meters <= threshold_m:
             return True
         return False
@@ -588,7 +592,7 @@ class RoleAllocationEngine:
                                         self.set_roles_taken(currResponder, self.get_roles()[0]) 
                                         currResponder.set_isInNoChangeArea(True)
                                         print("RoEgn::: :::ASSIGNED TO CPR HERO")
-                                        return("ASSIGNED TO CPR HERO")
+                                        return("Assigned to CPR HERO")
                                     elif self.get_roles()[1] not in self.get_roles_taken(): ###################### Second: Check if AED BUDDY open
                                         ### Second part 1: Check if user has Collected AED
                                         taggedAEDResponder = self.get_AEDTag()
@@ -597,20 +601,22 @@ class RoleAllocationEngine:
                                             self.set_roles_taken(currResponder, self.get_roles()[1])
                                             currResponder.set_isInNoChangeArea(True)
                                             print("RoEgn::: :::ASSIGNED TO AED BUDDY")
-                                            return("ASSIGNED TO AED BUDDY")
+                                            return("Assigned to AED BUDDY")
                                         ### Second part 2.1: If nobody is collecting AED
                                         elif taggedAEDResponder is None:
                                             # TAG RESPONDER TO COLLECT AED
                                             self.set_AEDTag(currResponder.get_emulatorId())
                                             print("RoEgn::: :::Responder tagged to COLLECT AED")
-                                            return("Responder tagged to COLLECT AED")
+                                            # return("Responder tagged to COLLECT AED")
+                                            return("Follow route to collect AED")
                                         ### Second part 2.2: If somebody is collecting AED
                                         elif taggedAEDResponder is not None: 
                                             ### Check if current user is Tagged Responder else compare who is closer to AED
                                             if taggedAEDResponder == currResponder.get_emulatorId():
                                                 # CONTINUE GETTING AED
                                                 print("RoEgn::: :::Responder already tagged, continue to COLLECT AED")
-                                                return("Responder already tagged, continue to COLLECT AED")
+                                                # return("Responder already tagged, continue to COLLECT AED")
+                                                return("Continue to COLLECT AED")
                                             else:
                                                 ### Check if current user is closer to AED by 100m with Person Tagged with AED
                                                 if True:
@@ -618,18 +624,20 @@ class RoleAllocationEngine:
                                                     # GIVE currResponder TASK TO GET AED & UPDATE AEDTag
                                                     # UPDATE other original AEDTagged to go to scene
                                                     print("RoEgn::: :::TASK UPDATE currResponder to get AED, original AEDTagged to go Scene")
-                                                    return("TASK UPDATE currResponder to get AED, original AEDTagged to go Scene")
+                                                    # return("TASK UPDATE currResponder to get AED, original AEDTagged to go Scene")
+                                                    return("TASK UPDATE to get AED")
                                                 else:
                                                     # Not Shorter by 100m
                                                     print("RoEgn::: :::Proceed to SCENE p1")
-                                                    return("Proceed to SCENE p1")
+                                                    # return("Proceed to SCENE p1")
+                                                    return("Proceed to SCENE")
                                     else: ######################################################################### Third: ASSISTANCE
-                                        # Never check how many assistan are taken
+                                        # Never check how many assistant are taken
                                         # ASSIGN RESPONDER WITH ASSISTANCE
                                         self.set_roles_taken(currResponder, self.get_roles()[3]) 
                                         currResponder.set_isInNoChangeArea(True)
                                         print("RoEgn::: :::ASSIGNED TO ASSISTANCE")
-                                        return("ASSIGNED TO ASSISTANCE")
+                                        return("Assigned to Assistance")
                                 else:
                                     # User still outside No-Change Radius
                                     ### Check if AED Collected
@@ -637,7 +645,7 @@ class RoleAllocationEngine:
                                         # AED Collected by at least 1 CFR already
                                         # GO TO SCENE
                                         print("RoEgn::: :::Proceed to SCENE p2")
-                                        return("Proceed to SCENE p2")
+                                        return("Proceed to casualty with AED") #p2
                                     else:
                                         # No AED Collected
                                         ### Check how many CFRs are attending to case
@@ -648,7 +656,7 @@ class RoleAllocationEngine:
                                             case 1: # 1 CFR attending
                                                 # GO SCENE + GET AED ALONG THE WAY
                                                 print("RoEgn::: :::Proceed to SCENE and GET AED ALONG THE WAY")
-                                                return("Proceed to SCENE and GET AED ALONG THE WAY")
+                                                return("Proceed to casualty")
                                             case 2: # 2 CFR attending
                                                 # Loop through other CFRs to do checks
                                                 # TODO: Get current user's distance to AED then to Scene
@@ -658,8 +666,9 @@ class RoleAllocationEngine:
                                                         if self.is_role_no_change(responder):
                                                             # Other Responder in No-Change Radius
                                                             # GIVE currResponder TASK TO GET AED & ADD TO AEDTag
+                                                            self.set_AEDTag(responder_id)
                                                             print("RoEgn::: :::currResponder get AED & ADD TO AEDTag p1")
-                                                            return("Go get AED & ADD TO AEDTag p1")
+                                                            return("Follow route to collect AED") #& ADD TO AEDTag p1")
                                                             break # Stop loop since task given
                                                         else:
                                                             # Other Responder outside No-Change Radius
@@ -668,16 +677,26 @@ class RoleAllocationEngine:
                                                             if self.get_AEDTag() is not None:
                                                                 # CONTINUE ROLE/TASK OR IF WE WANT TO DO TASK CHECK/UPDATE
                                                                 print("RoEgn::: :::Continue AED/Scene Task")
-                                                                return("Continue AED/Scene Task")
+                                                                # return("Continue AED/Scene Task")
+                                                                return("Continue Task")
                                                             else:
                                                                 ### Compare if currResponder distance to AED then to Scene is shorter by 100m to other responder.
-                                                                if True:
+                                                                other_responder_location = responder.get_location()
+                                                                this_responder_location = joined_users.get(responder_id).get_location()
+                                                                closest_AED = (locations[0]['latitude'], locations[0]['longitude'])
+                                                                print(f"closest AED location 33333333333333333333333 {closest_AED}")
+                                                                otherCFR_to_AED = geodesic(other_responder_location, closest_AED).meters
+                                                                thisCFR_to_AED = geodesic(this_responder_location, closest_AED).meters
+                                                                print(f"Comparing other CFR to AED: {otherCFR_to_AED}")
+                                                                print(f"Comparing this CFR to AED: {thisCFR_to_AED}")
+                                                                if otherCFR_to_AED - thisCFR_to_AED <= 100:
                                                                     # Shorter by 100m
                                                                     # GIVE currResponder TASK TO GET AED & ADD TO AEDTag
                                                                     self.set_AEDTag(responder_id)
                                                                     print(f"RoEgn::: :::AED Tag set to -> {responder_id}")
                                                                     print("RoEgn::: :::currResponder get AED & ADD TO AEDTag p2")
-                                                                    return("Go get AED & ADD TO AEDTag p2")
+                                                                    # return("Go get AED & ADD TO AEDTag p2")
+                                                                    return("Follow route to collect AED")
                                                                     break # Stop loop since task given
                                                                 else:
                                                                     # Not Shorter by 100m
@@ -685,7 +704,8 @@ class RoleAllocationEngine:
                                                                     self.set_AEDTag(responder.get_emulatorId)
                                                                     print(f"RoEgn::: :::AED Tag set to -> {responder.get_emulatorId()}")
                                                                     print("RoEgn::: :::LET FIRST RESPONDER TASK TO GET AED & ADD TO AEDTag ONCE HE ACCEPT FROM FRONTEND")
-                                                                    return("LET FIRST RESPONDER TASK TO GET AED & ADD TO AEDTag ONCE HE ACCEPT FROM FRONTEND")
+                                                                    # return("LET FIRST RESPONDER TASK TO GET AED & ADD TO AEDTag ONCE HE ACCEPT FROM FRONTEND")
+                                                                    return("Proceed to casualty")
                                                                     break # Stop loop since task given
                                             case 3,4,5: # 3-5 CFR attending
                                                 # Loop through other CFRs to do checks
@@ -868,16 +888,22 @@ def join_session():
 def accept_case():
     data = request.json
     device_id = data.get('device_id')
-
+    user_lat = data.get('user_lat')
+    user_lng = data.get('user_lng')
+    closest_AED = (locations[0]['latitude'], locations[0]['longitude'])
+    print(f"BBBBBB {closest_AED}")
     try:
+        responder : Responder = Responder()
         # Add Responder responding to case in Role Engine
         responder = joined_users.get(device_id)
+        responder.set_location(user_lat, user_lng)
         roleEngine.add_responder(responder)
         # Send Responder to Role Engine
         roleEngineStatus = "RoEgn::: :::Success" 
         roleEngineStatus = roleEngine.role_engine(device_id, incidents[0], responder)
     except Exception as e:
-        roleEngineStatus = "RoEgn::: :::Failed" 
+        # roleEngineStatus = "RoEgn::: :::Failed" 
+        roleEngineStatus = " " 
         print (f"Error: {e}")
     
     print(f"Responder {device_id} joined incident")
@@ -888,14 +914,41 @@ def accept_case():
 def next_step():
     data = request.json
     device_id = data.get('device_id')
+    user_lat = data.get('user_lat')
+    user_lng = data.get('user_lng')
 
     try:
+        responder : Responder = Responder()
         responder = joined_users.get(device_id)
+        responder.set_location(user_lat, user_lng)
         # Send Responder to Role Engine
         roleEngineStatus = "RoEgn::: :::Success" 
         roleEngineStatus = roleEngine.role_engine(device_id, incidents[0], responder)
     except Exception as e:
-        roleEngineStatus = "RoEgn::: :::Failed" 
+        # roleEngineStatus = "RoEgn::: :::Failed" 
+        roleEngineStatus = " " 
+        print (f"Error: {e}")
+
+    return jsonify({"role_engine_status": roleEngineStatus, "given_at": datetime.utcnow().isoformat()})
+
+@app.route('/collect-AED', methods=['POST'])
+def collect_AED():
+    data = request.json
+    device_id = data.get('device_id')
+    user_lat = data.get('user_lat')
+    user_lng = data.get('user_lng')
+
+    try:
+        responder : Responder = Responder()
+        responder = joined_users.get(device_id)
+        responder.set_location(user_lat, user_lng)
+        # Send Responder to Role Engine
+        roleEngineStatus = "RoEgn::: :::Success" 
+        roleEngine.set_isAEDCollectedBy(device_id)
+        roleEngineStatus = roleEngine.role_engine(device_id, incidents[0], responder)
+    except Exception as e:
+        # roleEngineStatus = "RoEgn::: :::Failed" 
+        roleEngineStatus = " " 
         print (f"Error: {e}")
 
     return jsonify({"role_engine_status": roleEngineStatus, "given_at": datetime.utcnow().isoformat()})

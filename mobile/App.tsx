@@ -91,12 +91,13 @@ function HomeScreen({ navigation }: any) {
       <Text style={styles.text}>
         Backend data: {data ? JSON.stringify(data) : 'Loading...'}
       </Text>
-      <Button title="Go to Second Page" onPress={() => navigation.navigate('Second')} />
+      {/* <Button title="Go to Second Page" onPress={() => navigation.navigate('Second')} /> */}
       <Button title="Go to Dashboard" onPress={() => navigation.navigate('Dashboard')} />
-      <Button title="Go to View More" onPress={() => navigation.navigate('ViewMore')} />
+      {/* <Button title="Go to View More" onPress={() => navigation.navigate('ViewMore')} /> */}
       <Button title="Go to Disability Settings" onPress={() => navigation.navigate('DisabilitySettings')} />
       <Button title="ModalTestScreen" onPress={() => navigation.navigate('TestScreen')} />
-      <Button title="Scenario Screen" onPress={() => navigation.navigate('ScenarioScreen')} />
+      {/* <Button title="Scenario Screen" onPress={() => navigation.navigate('ScenarioScreen')} /> */}
+      <Button title="Join me Screen" onPress={() => navigation.navigate('RoleScreen')} />
     </View>
   );
 }
@@ -106,7 +107,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider> 
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="RoleScreen">
+        <Stack.Navigator initialRouteName="Home">
 
         <Stack.Screen name="RoleScreen" component={RoleScreen} />
         <Stack.Screen name="ScreenA" component={ScreenA} />

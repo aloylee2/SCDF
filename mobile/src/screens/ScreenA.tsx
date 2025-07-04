@@ -1,6 +1,7 @@
 // Get Emulator ID
 import axios from 'axios';
 import { getPersistentDeviceId } from '../utils/getDeviceId';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 //google map & aed-location
 import React, { useEffect, useRef, useState } from 'react';
 import { 
@@ -24,6 +25,7 @@ import MapView, {
 import Geolocation from '@react-native-community/geolocation';
 import { AlertBanner } from './role-engine_screen/AlertBanner';
 import { RedBanner } from './role-engine_screen/RedBanner';
+import PopupOverlay from './role-engine_screen/PopupOverlay';
 
 //google map & aed-location
 interface AEDLocation {
@@ -58,6 +60,14 @@ export default function ScreenA() {
   const [showNextButtons, setShowNextButtons] = useState(false);
   const [activeChip, setActiveChip] = useState<'walk' | 'bicycle' | 'car'>('walk');
   const [bannerText, setBannerText] = useState('We need CFRs!');
+  const [bannerImg, setBannerImg] = useState(require('../assets/role_engine/running_cfr.png'));
+  const [showAedBuddyPopup, setShowAedBuddyPopup] = useState(false);
+  const [hasShownAedBuddyPopup, setHasShownAedBuddyPopup] = useState(false);
+  const [showCPRHeroPopup, setShowCPRHeroPopup] = useState(false);
+  const [hasShownCPRHeroPopup, setHasShownCPRHeroPopup] = useState(false);
+
+  //aed
+  const [aedCollected, setAedCollected] = useState(false);
 
   const acceptCase = async () => {
     console.log("acceptCase triggered");
@@ -68,6 +78,8 @@ export default function ScreenA() {
     try {
       const response = await axios.post('http://10.0.2.2:5000/accept-case', {
         device_id: deviceId, 
+        user_lat: userLocation?.latitude,
+        user_lng: userLocation?.latitude, 
       });
 
       const flowFromRoleEngine = response.data.role_engine_status;
@@ -77,7 +89,7 @@ export default function ScreenA() {
     if (flowFromRoleEngine != null) {
         console.log("🔁 something is coming out");
       } else {
-        Alert.alert('Info', 'Nothing coming through from backend.');
+        Alert.alert('Info', 'Backend loading...');
       }
     } catch (error) {
       console.error('🔥 Error!!!:', error);
@@ -85,7 +97,34 @@ export default function ScreenA() {
     }
   };
 
-  const nextStepCase = async () => {
+  // const nextStepCase = async () => {
+  //   console.log("nextStepCase triggered");
+
+  //   const deviceId = await getPersistentDeviceId();
+  //   console.log('📱 Device ID:', deviceId);
+
+  //   try {
+  //     const response = await axios.post('http://10.0.2.2:5000/next-step', {
+  //       device_id: deviceId, 
+  //       user_lat: userLocation?.latitude,
+  //       user_lng: userLocation?.longitude, 
+  //     });
+
+  //     const flowFromRoleEngine = response.data.role_engine_status;
+  //     console.log('🎯 Flow given:', flowFromRoleEngine);
+  //     setFlow(flowFromRoleEngine);
+
+  //   if (flowFromRoleEngine != null) {
+  //       console.log("🔁 something is coming out");
+  //     } else {
+  //       Alert.alert('Info', 'Nothing coming through from backend.');
+  //     }
+  //   } catch (error) {
+  //     console.error('🔥 Error!!!:', error);
+  //     Alert.alert('Error', 'Something Failed. Please try again.');
+  //   }
+  // };
+  const nextStepCase = async (lat?: number, lng?: number) => {
     console.log("nextStepCase triggered");
 
     const deviceId = await getPersistentDeviceId();
@@ -93,7 +132,37 @@ export default function ScreenA() {
 
     try {
       const response = await axios.post('http://10.0.2.2:5000/next-step', {
+        device_id: deviceId,
+        user_lat: lat ?? userLocation?.latitude,
+        user_lng: lng ?? userLocation?.longitude,
+      });
+
+      const flowFromRoleEngine = response.data.role_engine_status;
+      console.log('🎯 Flow given:', flowFromRoleEngine);
+      setFlow(flowFromRoleEngine);
+
+      if (flowFromRoleEngine != null) {
+        console.log("🔁 something is coming out");
+      } else {
+        Alert.alert('Info', 'Backend loading...');
+      }
+    } catch (error) {
+      console.error('🔥 Error!!!:', error);
+      Alert.alert('Error', 'Something Failed. Please try again.');
+    }
+  };
+
+  const collectAED = async () => {
+    console.log("collectAED triggered");
+
+    const deviceId = await getPersistentDeviceId();
+    console.log('📱 Device ID:', deviceId);
+
+    try {
+      const response = await axios.post('http://10.0.2.2:5000/collect-AED', {
         device_id: deviceId, 
+        user_lat: userLocation?.latitude,
+        user_lng: userLocation?.latitude, 
       });
 
       const flowFromRoleEngine = response.data.role_engine_status;
@@ -103,7 +172,7 @@ export default function ScreenA() {
     if (flowFromRoleEngine != null) {
         console.log("🔁 something is coming out");
       } else {
-        Alert.alert('Info', 'Nothing coming through from backend.');
+        Alert.alert('Info', 'Backend loading...');
       }
     } catch (error) {
       console.error('🔥 Error!!!:', error);
@@ -187,13 +256,42 @@ export default function ScreenA() {
 
   // Always show latest flow on Task Banner
   useEffect(() => {
-    if (flow) setBannerText(flow);
-  }, [flow]);
+  if (flow) {
+    if (flow != 'Continue ROLE/TASK'){
+      setBannerText(flow);  
+    }
+    if (flow === 'Proceed to casualty' || flow === "ASSIGNED TO CPR HERO" || flow === "Continue ROLE/TASK") {
+      handleRouteUserToPatient();
+      setBannerImg(require('../assets/role_engine/cpr_hero.png'));
+    }
+    else if (flow === "Follow route to collect AED"){
+      handleRouteUserToNearestAED();
+      setAedCollected(false);
+    }
+    else if (flow === "Assigned to AED BUDDY"){
+      setBannerImg(require('../assets/role_engine/aed_buddy.png'));
+    }
+  }
+}, [flow]);
 
   // Auto-fetch user location
   useEffect(() => {
   getCurrentLocation();
 }, []);
+
+  useEffect(() => {
+    if (flow === "Assigned to AED BUDDY" && !hasShownAedBuddyPopup) {
+      setShowAedBuddyPopup(true);
+      setHasShownAedBuddyPopup(true);
+    }
+  }, [flow, hasShownAedBuddyPopup]);
+
+  useEffect(() => {
+    if (flow === "Assigned to CPR HERO" && !hasShownCPRHeroPopup) {
+      setShowCPRHeroPopup(true);
+      setHasShownCPRHeroPopup(true);
+    }
+  }, [flow, hasShownCPRHeroPopup]);
 
   const requestLocationPermission = async () => {
     if (Platform.OS === 'android') {
@@ -252,49 +350,6 @@ export default function ScreenA() {
       );
       return !nearest || dist < (nearest.dist ?? Infinity) ? { ...loc, dist } : nearest;
     }, null as AEDLocation | null);
-  };
-
-  const handleFindNearest = async () => {
-    setShowNearbyPatientPins(false); // <-- Reset flag when using other button
-    const loc = await getCurrentLocation();
-    if (!loc) {
-      Alert.alert('Location Error', 'Location permission denied or unavailable.');
-      return;
-    }
-
-    const nearest = findNearestAED(loc);
-    setNearestAED(nearest); // Track nearest AED
-    if (!nearest) {
-      Alert.alert('AED Not Found', 'No AED found.');
-      return;
-    }
-
-    if (!mapRef.current) return;
-
-    const origin = `${loc.latitude},${loc.longitude}`;
-    const destination = `${nearest.latitude},${nearest.longitude}`;
-    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${GOOGLE_MAPS_APIKEY}&mode=walking`;
-
-    try {
-      const response = await fetch(url);
-      const json = await response.json();
-      if (json.routes.length) {
-        const points = decodePolyline(json.routes[0].overview_polyline.points);
-        setRouteCoords(points);
-        mapRef.current.fitToCoordinates(points, {
-          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
-          animated: true,
-        });
-      } else {
-        setRouteCoords([
-          { latitude: loc.latitude, longitude: loc.longitude },
-          { latitude: nearest.latitude, longitude: nearest.longitude },
-        ]);
-      }
-    } catch (error) {
-      console.warn(error);
-      Alert.alert('Network Error', 'Failed to fetch directions.');
-    }
   };
 
   const handleRouteNearestToPatient = async () => {
@@ -376,6 +431,91 @@ export default function ScreenA() {
       }
     );
   };
+  //update user location
+
+  const updateRouteToPatient = async (fromLocation: LatLng) => {
+  const origin = `${fromLocation.latitude},${fromLocation.longitude}`;
+  const destination = `${patientLocation.latitude},${patientLocation.longitude}`;
+
+  const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${GOOGLE_MAPS_APIKEY}&mode=walking`;
+
+  try {
+    const response = await fetch(url);
+    const json = await response.json();
+    if (json.routes.length) {
+      const points = decodePolyline(json.routes[0].overview_polyline.points);
+      setRouteCoords(points);
+      mapRef.current?.fitToCoordinates(points, {
+        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+        animated: true,
+      });
+    }
+  } catch (error) {
+    console.warn('Error updating route:', error);
+  }
+};
+//path the user to AED
+const handleRouteUserToNearestAED = async () => {
+  const userLoc = await getCurrentLocation();
+  if (!userLoc) {
+    Alert.alert('Location Error', 'Location permission denied or unavailable.');
+    return;
+  }
+
+  const nearest = findNearestAED(userLoc); // Already defined in your code
+  if (!nearest) {
+    Alert.alert('AED Error', 'No AED nearby.');
+    return;
+  }
+
+  const origin = `${userLoc.latitude},${userLoc.longitude}`;
+  const destination = `${nearest.latitude},${nearest.longitude}`;
+
+  const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${GOOGLE_MAPS_APIKEY}&mode=walking`;
+
+  try {
+    const response = await fetch(url);
+    const json = await response.json();
+    if (json.routes.length) {
+      const points = decodePolyline(json.routes[0].overview_polyline.points);
+      setRouteCoords(points);
+      simulateUserMovementAlongPath(points); // Start walking animation
+    }
+  } catch (error) {
+    console.warn('Error routing to AED:', error);
+    Alert.alert('Route Error', 'Could not get walking route to AED.');
+  }
+};
+
+
+  //path the user to case location 
+  const handleRouteUserToPatient = async () => {
+  const userLoc = await getCurrentLocation();
+  if (!userLoc) {
+    Alert.alert('Location Error', 'Location permission denied or unavailable.');
+    return;
+  }
+
+  const origin = `${userLoc.latitude},${userLoc.longitude}`;
+  const destination = `${patientLocation.latitude},${patientLocation.longitude}`;
+
+  const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${GOOGLE_MAPS_APIKEY}&mode=walking`;
+
+  try {
+    const response = await fetch(url);
+    const json = await response.json();
+    if (json.routes.length) {
+      const points = decodePolyline(json.routes[0].overview_polyline.points);
+      setRouteCoords(points);
+      simulateUserMovementAlongPath(points); // add this to start movement simulation
+    }
+  } catch (error) {
+    console.warn('Error routing to patient:', error);
+    Alert.alert('Route Error', 'Could not get walking route.');
+  }
+};
+
+
 
   const decodePolyline = (encoded: string): LatLng[] => {
     let points: LatLng[] = [];
@@ -407,6 +547,120 @@ export default function ScreenA() {
 
     return points;
   };
+
+  // 0.0001 is about 11 meters at the equator
+  // Simulate user movement along a path (e.g., the current routeCoords)
+//   const simulateUserMovementAlongPath = (path: LatLng[], intervalMs = 5000) => {
+//   if (!path || path.length === 0) return;
+
+//   let i = 0;
+//   setUserLocation(path[0]);
+
+//   const interval = setInterval(async () => {
+//     i++;
+//     if (i >= path.length) {
+//       clearInterval(interval);
+//       try {
+//         await AsyncStorage.setItem('lastUserLocation', JSON.stringify(path[path.length - 0.01]));
+//       } catch (e) {
+//         console.warn('Failed to save last user location:', e);
+//       }
+//       return;
+//     }
+
+//     const nextLocation = path[i];
+//     setUserLocation(nextLocation);
+
+//     //Recalculate the path from new location to patient
+//     updateRouteToPatient(nextLocation);
+//   }, intervalMs);
+// };
+const simulateUserMovementAlongPath = (path: LatLng[], intervalMs = 1000) => {
+  if (!path || path.length === 0) return;
+  //smoooth travel for user
+  const finePath = densifyPath(path, 4); 
+
+  let i = 0;
+  setUserLocation(finePath[0]);
+
+  const interval = setInterval(async () => {
+    i++;
+    if (i >= finePath.length) {
+      clearInterval(interval);
+      try {
+        await AsyncStorage.setItem('lastUserLocation', JSON.stringify(finePath[finePath.length - 1]));
+        nextStepCase();
+      } catch (e) {
+        console.error('last user location not send:', e);
+      }
+      return;
+    }
+
+    const nextLocation = finePath[i];
+    setUserLocation(nextLocation);
+
+    // Update route if need cal again
+    updateRouteToPatient(nextLocation);
+    //ping backend
+    await nextStepCase(nextLocation.latitude, nextLocation.longitude);
+
+  }, intervalMs);
+};
+// const simulateUserMovementAlongPath = (path: LatLng[], intervalMs = 5000) => {
+//   if (!path || path.length === 0) return;
+
+//   let i = 0;
+//   setUserLocation(path[0]);
+
+//   const interval = setInterval(async () => {
+//     i++;
+//     if (i >= path.length) {
+//       clearInterval(interval);
+//       try {
+//         await AsyncStorage.setItem('lastUserLocation', JSON.stringify(path[path.length - 1]));
+//       } catch (e) {
+//         console.warn('Failed to save last user location:', e);
+//       }
+//       return;
+//     }
+
+//     const nextLocation = path[i];
+//     setUserLocation(nextLocation);
+
+//     // Recalculate route if needed
+//     updateRouteToPatient(nextLocation);
+
+//     // Send current location explicitly to backend
+//     await nextStepCase(nextLocation.latitude, nextLocation.longitude);
+//   }, intervalMs);
+// };
+
+
+
+
+const interpolatePoints = (start: LatLng, end: LatLng, numPoints: number): LatLng[] => {
+  const points: LatLng[] = [];
+  for (let i = 1; i <= numPoints; i++) {
+    const lat = start.latitude + (end.latitude - start.latitude) * (i / (numPoints + 1));
+    const lng = start.longitude + (end.longitude - start.longitude) * (i / (numPoints + 1));
+    points.push({ latitude: lat, longitude: lng });
+  }
+  return points;
+};
+
+const densifyPath = (originalPath: LatLng[], segmentsPerLeg = 4): LatLng[] => {
+  const newPath: LatLng[] = [];
+
+  for (let i = 0; i < originalPath.length - 1; i++) {
+    const start = originalPath[i];
+    const end = originalPath[i + 1];
+    newPath.push(start);
+    newPath.push(...interpolatePoints(start, end, segmentsPerLeg)); // e.g., insert 4 points
+  }
+  newPath.push(originalPath[originalPath.length - 1]);
+  return newPath;
+};
+
   
   // Helper to move user 10m toward patient location
   const moveUserTowardPatientBy10m = () => {
@@ -445,7 +699,10 @@ export default function ScreenA() {
       longitude: toDegrees(newLon),
     });
   };
-
+const aedLocation = {
+      latitude: 1.35188730448634,
+      longitude: 103.842894664891,
+    };
   return (
     <View style={styles.container}>
       {/* Top Popup */}
@@ -545,10 +802,58 @@ export default function ScreenA() {
             strokeColor="#007AFF"
             strokeWidth={4}
           />
+
+          
         )}
       </MapView>
+      {/* aed button */}
+      {flow === 'Follow route to collect AED' && !aedCollected && (
+        <TouchableOpacity
+          style={styles.aedCollectBtn}
+            onPress={async () => {
+              // Since aedLocation is hardcoded, we don't need to check for its existence.
+              setUserLocation(aedLocation); // set user location to AED location
+              setAedCollected(true);
+              await collectAED(); // update backend that AED is collected
+              handleRouteUserToPatient(); // reroute to casualty from AED location
+            }}
+          >
+          <Text style={styles.aedCollectBtnBackground}>
+            ⚡
+          </Text>
+            <Text style={styles.aedCollectBtnText}>
+              Swipe up if{'\n'}AED{'\n'}collected
+            </Text>
+          </TouchableOpacity>
+      // <TouchableOpacity
+      //   style={{
+      //     position: 'absolute',
+      //     bottom: 180,
+      //     alignSelf: 'center',
+      //     backgroundColor: '#28A745',
+      //     paddingHorizontal: 20,
+      //     paddingVertical: 12,
+      //     borderRadius: 12,
+      //     zIndex: 999,
+      //   }}
+      //   onPress={() => {
+      //     setAedCollected(true); // mark as collected
+      //     handleRouteUserToPatient(); // reroute to casualty
+      //     collectAED(); // update backend Role Engine AED has been collected
+      //   }}
+      // >
+      //   <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+      //     ✅ AED Collected – Proceed to Casualty
+      //   </Text>
+      // </TouchableOpacity>
+      )}
 
-      <RedBanner text={bannerText} visible={!!bannerText} />
+      {/* Banner text to check if case location/aed == Proceed to casualty  */}
+      <RedBanner 
+        text={bannerText} 
+        bannerImg={bannerImg} 
+        visible={!!bannerText} 
+      />
 
       {/* Accept case menu */}
       {showAlertBanner && (
@@ -560,7 +865,10 @@ export default function ScreenA() {
             setShowAlertBanner(false);
             setShowNextButtons(true);
           }}
-          onDecline={() => setShowAlertBanner(false)}
+          onDecline={() => {
+            setShowAlertBanner(false)
+            setShowNextButtons(true)
+          }}
           children={"This is an Alert banner!"}
           // ...other props as needed
         />
@@ -628,11 +936,31 @@ export default function ScreenA() {
           {/* Arrive Scene button */}
           <TouchableOpacity
             style={styles.arriveBtn}
-            onPress={() => {/* Tap when arrived logic */}}
+            onPress={handleRouteUserToPatient}
           >
             <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>Tap when arrived</Text>
           </TouchableOpacity>
         </View>
+      )}
+
+      {showCPRHeroPopup && (
+        <PopupOverlay
+          visible={showCPRHeroPopup}
+          onClose={() => setShowCPRHeroPopup(false)}
+          bannerText="CPR HERO Assigned"
+          description="You have been assigned as the CPR HERO."
+          imageSource={require('../assets/role_engine/cpr_hero.png')}
+        />
+      )}
+
+      {showAedBuddyPopup && (
+        <PopupOverlay
+          visible={showAedBuddyPopup}
+          onClose={() => setShowAedBuddyPopup(false)}
+          bannerText="AED Buddy Assigned"
+          description="You have been assigned as the AED Buddy."
+          imageSource={require('../assets/role_engine/aed_buddy.png')}
+        />
       )}
         
       {/* Btn for Testing */}
@@ -839,5 +1167,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     marginTop: 7,
-  }
+  },
+  // AED Collect Btn
+  aedCollectBtn:{
+    position: 'absolute',
+    bottom: 410,
+    left: 8,
+    alignSelf: 'center',
+    backgroundColor: '#7CFD7C',
+    borderColor: '#224C87',
+    borderWidth: 5,
+    borderRadius: 28,
+    width: 140,
+    height: 140,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  aedCollectBtnBackground:{
+    position: 'absolute',
+    fontSize: 110, 
+    color: 'rgba(255,255,255,0.5)',
+    alignSelf: 'center',
+    top: 10,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    zIndex: 1,
+  },
+  aedCollectBtnText:{ 
+    color: 'black',
+    fontWeight: 'bold',
+    fontSize: 24,
+    textAlign: 'center',
+    zIndex: 2,
+  },
 });
