@@ -106,6 +106,7 @@
 
 <ul>
   <li><b>Qays Faaris</b> (Leader)</li>
+  <li><b>Rohit Panda</b> (Team member)</li>
   <li><b>Aloysius Lee</b> (Full-Stack Engineer)</li>
   <li><b>Huang Kaibao</b> (Full-Stack Engineer)</li>
   <li><b>Sean Er</b> (Full-Stack Engineer)</li>
